@@ -1,0 +1,259 @@
+﻿ï»¿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.14 Menu - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/menu.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.14 Menu（菜单：MenuBar / MenuPanel / MenuItem）</h1>
+
+<p>菜单系统由三件套组成：<strong>MenuBar</strong>（顶级菜单栏）、<strong>MenuPanel</strong>（下拉面板，支持嵌套子菜单）、<strong>MenuItem</strong>（菜单项，支持 Normal / Separator / SubMenu）。三者均继承 <code>ControlImpl</code>。支持「菜单模式」：点击展开后鼠标移动自动切换顶级菜单。</p>
+
+<div class="note">缩放联动：MenuBar 与下拉面板字号随复合缩放系数重建（Bar 变化经共享字体传播到各面板、嵌套子菜单）。详见 <a href="../advanced/canvas-scale.html">5.6.6</a>。</div>
+
+<p><strong>布局模式（v1.1.1 增强）</strong>：MenuBar 有两种定位模式——<strong>顶层模式</strong>（默认，挂到画布顶层 Bench 时全宽贴顶）与<strong>容器内模式</strong>（挂入 panel / v-flow 等布局引擎容器时自动切换手动定位，participant 由布局引擎重排，无需 JSON 显式 <code>manual-position</code>）。弹出下拉面板始终挂到顶层（不被容器遮挡），详见 <a href="#4-14-7">4.14.7（v1.1.1 新增）</a>。</p>
+
+<h2>4.14.1 控件的创建</h2>
+
+<pre><code>// C++（三件套 + Builder）
+MenuItem(Control* parent, MenuItemType type = MenuItemType::Normal, float xScale = 1.0f, float yScale = 1.0f);
+MenuPanel(Control* parent, float xScale = 1.0f, float yScale = 1.0f);
+MenuBar(Control* parent, float xScale = 1.0f, float yScale = 1.0f);
+
+auto filePanel = MenuPanelBuilder()
+    .addItem(MenuItemBuilder(u8"新建(N)").setShortcut("Ctrl+N").setOnClick(cb).build())
+    .addSeparator()
+    .build();
+auto bar = MenuBarBuilder(BENCH).addMenu(u8"文件(F)", filePanel).build();
+BENCH->addControl(bar);
+
+// C ABI（组装顺序：MenuItem → MenuPanel → MenuBar）
+UIControlHandle item  = UICornerstone_CreateMenuItem(g_inst, "Open", 0, 1.0f, 1.0f);          // 0=Normal 1=Separator 2=SubMenu
+UIControlHandle panel = UICornerstone_CreateMenuPanel(g_inst, 1.0f, 1.0f);
+UICornerstone_MenuPanelAddItem(g_inst, panel, item);
+UIControlHandle bar   = UICornerstone_CreateMenuBar(g_inst, 0, 0, 800, 32, 1.0f, 1.0f);
+UICornerstone_MenuBarAddMenu(g_inst, bar, "File", panel);</code></pre>
+
+
+<h2>4.14.2 控件的属性（C ABI 属性系统）</h2>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>caption</code></td><td><code>kCaption</code></td><td>String</td><td>MenuItem 文字（SetString）</td></tr>
+<tr><td><code>checked</code></td><td><code>kChecked</code></td><td>Bool</td><td>MenuItem 勾选（SetBool）</td></tr>
+<tr><td><code>click</code></td><td><code>kEventClick</code></td><td>callback</td><td>MenuItem 点击回调（SetCallback）</td></tr>
+<tr><td><code>font</code></td><td><code>kFont</code></td><td>Enum</td><td>菜单字体名（默认 MapleMono_NF_CN_Regular）</td></tr>
+<tr><td><code>value</code></td><td><code>kValue</code></td><td>Float</td><td>MenuBar 字号（float 通道，setFontSize）</td></tr>
+<tr><td><code>bar-height</code></td><td><code>kBarHeight</code></td><td>Float</td><td>MenuBar 尺寸属性（setFloatProperty）</td></tr>
+<tr><td><code>item-height-ratio</code></td><td><code>kItemHeightRatio</code></td><td>Float</td><td>MenuBar 尺寸属性（setFloatProperty）</td></tr>
+<tr><td><code>font-size</code></td><td><code>kFontSize</code></td><td>Float</td><td>MenuBar 字号（P0-72：与 JSON/schema 同键直通）</td></tr>
+<tr><td><code>shadow-radius</code></td><td><code>kShadowRadius</code></td><td>Float</td><td>下拉面板阴影半径（P0-72①；缺省 8；MenuBar 设置自动传播到全部面板）</td></tr>
+<tr><td><code>manual-position</code></td><td><code>kManualPosition</code></td><td>Bool</td><td>MenuBar 手动定位：跳过全宽布局，setRect 自由生效（同屏多 MenuBar / 缩放对比；<strong>挂入 v-flow 等布局引擎容器时自动置 true</strong>，无需显式设置）（Set/GetBool）</td></tr>
+<tr><td><code>hovered-index</code></td><td><code>kHoveredIndex</code></td><td>Int</td><td>MenuPanel 悬停项索引（Set/GetInt，读写）；MenuBar 同名键**只读**读回（P0-82，GetInt 可读、不暴露写回）</td></tr>
+<tr><td><code>active-index</code></td><td><code>kActiveIndex</code></td><td>Int</td><td>MenuBar 激活（展开中）菜单索引**只读**读回（P0-88；-1=无；GetInt 可读）</td></tr>
+<tr><td><code>shortcut</code></td><td><code>kShortcut</code></td><td>String</td><td>MenuItem 快捷键（SetString）</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+<h3>4.14.2.1 item 级属性（C ABI，item-id 定位模式）</h3>
+<p>Menu 的逐项增强属性挂在 <strong>MenuPanel</strong> 上：先 <code>SetString("item-id", id)</code> 定位目标菜单项，随后 item 级属性作用于该菜单项。MenuItem 自身也支持 <code>SetString("item-id", id)</code> 设置其定位 id（编程式创建时便于后续定位）。</p>
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认</th><th>说明</th></tr>
+<tr><td><code>item-id</code></td><td><code>kTreeItemId</code></td><td>String</td><td>—</td><td>定位目标菜单项（在 MenuPanel 上设置后，后续 item 级属性作用于该菜单项）。注：JSON items 的 <code>id</code> 另注册进实例 id 表——<code>FindControl(id)</code> 可达（P0-87；与控件 id 同表，重名后注册覆盖；ContextMenu items 经同一解析覆盖）</td></tr>
+<tr><td><code>item-font</code></td><td><code>kTreeItemFont</code></td><td>Enum</td><td>继承 MenuPanel</td><td>逐项字体枚举（如 <code>maplemono-nf-cn-regular</code> 粗体）</td></tr>
+<tr><td><code>item-font-size</code></td><td><code>kTreeItemFontSize</code></td><td>Int</td><td>0</td><td>逐项字号（0 = 继承面板字号；&gt;0 时该行行高 = 字号×item-height-ratio，独立于面板其余行）</td></tr>
+<tr><td><code>item-leading-gap</code></td><td><code>kTreeItemLeadingGap</code></td><td>Float</td><td>8</td><td>行前置控件容器与文本之间的间隔（局部 px）</td></tr>
+<tr><td><code>item-text</code></td><td><code>kItemText</code></td><td>Color / StateColor</td><td>继承 MenuPanel</td><td>逐项文本色（单态=normal / SetStateColor 四态；P0-72④）</td></tr>
+<tr><td><code>item-background</code></td><td><code>kItemBackground</code></td><td>Color</td><td>—</td><td>逐项背景色（P0-72④）</td></tr>
+<tr><td><code>item-hover-background</code></td><td><code>kItemHoverBackground</code></td><td>Color</td><td>—</td><td>逐项悬停背景（P0-72④）</td></tr>
+<tr><td><code>item-leading-control</code></td><td><code>kTreeItemLeadingControl</code></td><td>Ptr</td><td>—</td><td>行前置控件容器句柄（<strong>借用语义</strong>，生命周期由调用方保证；类型经 <code>UICornerstone_GetControlType</code> 查询（如 <code>"check-box"</code>），再经通用属性系统操作）。有容器时该行保留 icon 区（宽 = max(各行字体高度, 20)）、不绘制手绘勾选标记（勾选视觉由容器内控件承担）；传 <code>NULL</code> 解除容器</td></tr>
+</table>
+
+
+<h2>4.14.3 控件的回调</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>click</code></td>（回调名 MenuItem::onClick；JSON 键 <code>onClick</code>）</td><td><code>kEventClick</code></td><td>点击普通菜单项（子菜单项展开子菜单）</td><td><code>(shared_ptr&lt;MenuItem&gt;)</code> / <code>UIEventCallback(ctl, event, userData)</code></td></tr>
+</table>
+
+
+<h2>4.14.4 JSON 语法</h2>
+
+<pre><code>{
+  "type": "menu-bar",
+  "id": "mainMenu",
+  "font": { "size": 16 },
+  "bar-height": 32,
+  "menus": [
+    {
+      "caption": "文件(F)",
+      "items": [
+        { "id": "mNew", "caption": "新建", "shortcut": "Ctrl+N", "events": { "onClick": "onMenuNew" } },
+        { "type": "separator" },
+        { "id": "mRecent", "caption": "最近打开",
+          "items": [ { "caption": "file1.txt", "events": { "onClick": "onOpenRecent" } } ] },
+        { "id": "mToggle", "caption": "已启用开关", "checked": true,
+          "leadingControl": { "type": "check-box", "check-state": "checked" } },
+        { "id": "mBig", "caption": "大字号项", "font": { "size": 24 } },
+        { "caption": "退出", "checked": false, "events": { "onClick": "onMenuExit" } }
+      ]
+    }
+  ]
+}</code></pre>
+
+<p>示例为<strong>顶层模式</strong>（缺省菜单栏放顶层即全宽贴顶）。容器内用法：把 <code>menu-bar</code> 作为布局容器（如 v-flow）的普通子项，<strong>无需</strong> <code>manual-position</code>——挂入容器时自动切换，参与引擎重排：</p>
+<pre><code>{ "type": "panel", "layout": { "type": "v-flow", "gap": 8 },
+  "children": [
+    { "type": "menu-bar", "id": "flowMenu", "bar-height": 28,
+      "menus": [ { "caption": "文件(F)", "items": [ { "caption": "新建" } ] } ] },
+    { "type": "button", "id": "belowBtn", "caption": "OK", "rect": { "w": 0, "h": 32 } }
+  ] }</code></pre>
+
+<h3>4.14.4.14 item 增强（行前置控件容器 + 逐 Item 字号/行高）</h3>
+<p>Menu 二期增强（2026-08 实施）支持：</p>
+<ul>
+<li><strong>行前置控件容器</strong>：JSON 键 <code>leadingControl</code>（任意控件类型，如 <code>check-box</code> / <code>image</code>）。容器正方形、边长 = 该行字体高度、水平居中于 icon 区、垂直居中于行；面板有容器行时保留 icon 区（宽 = max(各行字体高度, 20)），无容器时 icon 区宽为 0（文本起点 = 左内边距 20，无 gap 预留）。</li>
+<li><strong>逐 Item 字体/字号</strong>：JSON 键 <code>font</code>（<code>name</code> / <code>size</code>，仅对该项生效；size=0 或缺省继承面板字号）。覆盖项行高 = 该项字号×item-height-ratio（默认 1.6），可形成变行高菜单。</li>
+<li><strong>勾选标记</strong>：<code>checked</code>（手绘勾，有容器行不绘制；item 勾选状态与容器内 CheckBox 自身状态相互独立）。</li>
+</ul>
+<pre><code>// 逐项增强 + 面板级定位（C ABI）
+UICornerstone_SetString(g_inst, panel, "item-id", "mToggle");        // 定位项
+void* lc = UICornerstone_GetPtr(g_inst, panel, "item-leading-control", NULL); // 取容器
+UICornerstone_GetBool(g_inst, lc, "checked", &checked);             // 操作容器
+UICornerstone_SetInt(g_inst, panel, "item-font-size", 18);          // 逐项字号
+UICornerstone_SetFloat(g_inst, panel, "item-leading-gap", 10);      // 逐项 gap</code></pre>
+
+
+<h2>4.14.5 C++ Binding / 核心库样例</h2>
+
+<pre><code>// 核心库（Builder 链式组装）
+g_filePanel = MenuPanelBuilder()
+    .addItem(MenuItemBuilder(u8"新建(N)")
+        .setShortcut("Ctrl+N")
+        .setOnClick([](shared_ptr<MenuItem> item) { cout << "New file clicked" << endl; })
+        .build())
+    .addSeparator()
+    .addItem(MenuItemBuilder(u8"最近打开的文件")
+        .setSubMenu(MenuPanelBuilder()
+            .addItem(MenuItemBuilder(u8"file1.txt")
+                .setOnClick([](shared_ptr<MenuItem> item) { cout << "file1 clicked" << endl; })
+                .build())
+            .build())
+        .build())
+    .build();
+g_menuBar = MenuBarBuilder(BENCH)
+    .addMenu(u8"文件(F)", g_filePanel)
+    .build();
+BENCH->addControl(g_menuBar);
+
+// Binding：MenuItem 的 caption/checked/shortcut/click 走统一属性系统
+Control item = ui->CreateMenuItem("Open", 0);
+item.SetString(PropertyNames::kCaption, "Open");
+item.SetCallback("click", [](const Event&){ /* ... */ });</code></pre>
+
+
+<h2>4.14.6 C ABI 调用样例</h2>
+
+<pre><code>// Menu 三件套：MenuBar + MenuPanel + MenuItem（type: 0=Normal, 1=Separator, 2=SubMenu）
+UIControlHandle file = UICornerstone_CreateMenuPanel(g_inst, 1.0f, 1.0f);
+UIControlHandle open = UICornerstone_CreateMenuItem(g_inst, "Open", 0, 1.0f, 1.0f);
+UICornerstone_MenuPanelAddItem(g_inst, file, open);
+UICornerstone_MenuPanelAddSeparator(g_inst, file);
+UIControlHandle more = UICornerstone_CreateMenuPanel(g_inst, 1.0f, 1.0f);   // 子菜单面板
+UICornerstone_MenuItemSetSubMenu(g_inst, open, more);
+
+UIControlHandle bar = UICornerstone_CreateMenuBar(g_inst, 0, 0, 800, 26, 1.0f, 1.0f);
+UICornerstone_MenuBarAddMenu(g_inst, bar, "File", file);
+
+// MenuItem 的 caption / checked / shortcut / click 走统一属性系统
+UICornerstone_SetString(g_inst, open, "shortcut", "Ctrl+O");
+static void onOpen(UIControlHandle ctl, const UIEventData* ev, void* ud) { }
+UICornerstone_SetCallback(g_inst, open, "click", onOpen, NULL);
+
+// 动态增删（P0-98）：SetCallback 即时生效（无需布局绑定）；移除项用 RemoveItem（完整移除，句柄失效）
+UICornerstone_MenuPanelRemoveItem(g_inst, file, open);</code></pre>
+<h2>4.14.7 布局模式与弹出置顶（v1.1.1 增强）</h2>
+
+<p><strong>布局模式</strong>：MenuBar 挂到画布顶层（Bench）时 = <em>顶层模式</em>，全宽贴顶（宽=父宽、顶部=0、高=bar-height）。挂入 panel / v-flow 等布局引擎容器时，<code>setParent</code> 自动切换为手动定位——放弃全宽重置，rect 完全由布局引擎驱动，可作为 v-flow 内的一行（多菜单栏 / 工具栏式布局），<strong>无需显式 <code>manual-position</code></strong>。</p>
+
+<p><strong>弹出置顶</strong>：打开下拉面板时，MenuPanel 临时挂到画布<b>顶层</b>（Bench 子列表末尾），保证：
+<ul>
+<li>绘制 / 事件层次高于所有容器控件，不被 v-flow 等布局容器的兄弟控件遮挡或裁剪；</li>
+<li>弹出位置 = 菜单栏绘制矩形 + 条目命中区×复合缩放（保持"条正下方"局部定位语义），尺寸为无缩放逻辑尺寸×面板自身复合（与 Popup 顶层弹出缩放语义一致）；</li>
+<li>关闭（点击其它地方 / ESC / 关闭菜单链）时摘回 MenuBar 父链；</li>
+<li><strong>屏幕钳制（P0-99）</strong>：子菜单右缘越视口时<strong>翻转到父项左侧</strong>（仍越界则收边）；下缘越视口上移（含顶部兜底）；顶层长面板右缘/下缘越界收边——长标题菜单不出屏。</li>
+</ul></p>
+
+<p><strong>全局关闭</strong>：菜单打开期间注册全局事件前置监视（before watcher，同 Popup）：
+<ul>
+<li>点击<b>菜单栏或打开面板（含子菜单）内</b> → 正常交互；</li>
+<li>点击<b>其它任何地方</b>（其它 MenuBar / 控件 / 空白）→ 先关闭本菜单再放行事件，目标控件随后打开自己的菜单（"全局单菜单"交互语义）；</li>
+<li>按 <kbd>Esc</kbd> → 直接关闭菜单并吸收按键。</li>
+</ul></p>
+
+
+
+
+<details class="methods">
+<summary>4.14.8 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+
+<h3>MenuItem</h3>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>closeMenuChain()</code></td><td>关闭整个菜单链</td></tr>
+<tr><td><code>getType()</code></td><td>项类型（Normal / Separator / SubMenu）</td></tr>
+<tr><td><code>setCaption(string)</code> / <code>getCaption()</code></td><td>菜单项文字</td></tr>
+<tr><td><code>setChecked(bool)</code> / <code>getChecked()</code></td><td>勾选状态</td></tr>
+<tr><td><code>setMenuFont(SharedFont, float)</code> / <code>getFont()</code> / <code>getFontSize()</code></td><td>面板注入共享字体</td></tr>
+<tr><td><code>setOnClick(OnClickHandler)</code></td><td>点击回调</td></tr>
+<tr><td><code>setShortcut(string)</code> / <code>getShortcut()</code></td><td>快捷键文本（如 "Ctrl+N"）</td></tr>
+<tr><td><code>setSubMenu(shared_ptr&lt;MenuPanel&gt;)</code> / <code>getSubMenu()</code> / <code>hasSubMenu()</code></td><td>子菜单</td></tr>
+<tr><td><code>setItemId(string)</code> / <code>getItemId()</code></td><td>项定位 id（CABI item-id 定位模式，MenuPanel 经 item-id 定位到该项）</td></tr>
+<tr><td><code>setLeadingControl(shared_ptr&lt;Control&gt;)</code> / <code>getLeadingControl()</code></td><td>行前置控件容器（借用语义；NULL 解除）</td></tr>
+<tr><td><code>setOwnFontSize(float)</code> / <code>getOwnFontSize()</code> / <code>setFontName(FontName)</code> / <code>getFontName()</code></td><td>逐项覆盖字号（0 = 继承面板）/ 逐项字体</td></tr>
+</table>
+
+<h3>MenuPanel</h3>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>addItem(shared_ptr&lt;MenuItem&gt;)</code> / <code>addSeparator()</code> / <code>removeItem(...)</code></td><td>菜单项管理</td></tr>
+<tr><td><code>closeWithChildren()</code> / <code>recalculateSize()</code></td><td>关闭 / 重算尺寸</td></tr>
+<tr><td><code>getItemAt(x, y)</code> / <code>getItemById(id)</code></td><td>命中测试 / 按 item-id 定位项</td></tr>
+<tr><td><code>getOpenSubMenu()</code> / <code>setOpenSubMenu(panel)</code>、<code>getHoveredIndex()</code> / <code>setHoveredIndex(int)</code></td><td>子菜单 / 悬停状态</td></tr>
+<tr><td><code>setFontSize(float)</code> / <code>getFontSize()</code>、<code>setItemHeightRatio(float)</code> / <code>getItemHeightRatio()</code>（1.0~3.0，默认 1.6）、<code>setFontName(FontName)</code></td><td>字体 / 行高比 / 字体名（即时生效）</td></tr>
+<tr><td><code>show()</code> / <code>hide()</code> / <code>isVisible()</code> / <code>setPosition(x, y)</code></td><td>显隐与定位</td></tr>
+</table>
+
+<h3>MenuBar</h3>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>addMenu(caption, panel)</code> / <code>removeMenu(caption)</code></td><td>顶级菜单管理（caption 首匹配；摘除不销毁——面板保活，可原句柄再 addMenu）</td></tr>
+<tr><td><code>closeAllMenus()</code></td><td>关闭全部下拉</td></tr>
+<tr><td><code>isInMenuMode()</code> / <code>enterMenuMode(int index)</code> / <code>exitMenuMode()</code></td><td>菜单模式（点击展开后鼠标移动自动切换）</td></tr>
+<tr><td><code>setBarHeight(float)</code> / <code>getBarHeight()</code></td><td>菜单栏高度</td></tr>
+<tr><td><code>setItemHeightRatio(float)</code> / <code>getItemHeightRatio()</code>、<code>setFontSize(float)</code> / <code>getFontSize()</code></td><td>尺寸 / 字号（默认 20）</td></tr>
+<tr><td><code>setManualPosition(bool)</code> / <code>getManualPosition()</code></td><td>手动定位开关（挂入布局引擎容器自动开启；顶层模式默认关闭）</td></tr>
+</table>
+
+</details>
+
+
+<div class="chapter-nav">
+  <a href="luotiani.html">← 4.13 LuotiAni（动画）</a>
+  <a href="numericupdown.html">下一节：4.15 NumericUpDown →</a>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+﻿ï»¿ï»¿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.9 EditBox - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/editbox.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.9 EditBox（单行输入框）</h1>
+
+<p>EditBox 是单行文本输入控件：支持光标、选区、剪贴板（Ctrl+C/X/V）、密码模式、占位符与焦点管理。多行输入请用 <a href="textarea.html">TextArea</a>（4.9）。继承链：<code>EditBox → ControlImpl → Control</code>。</p>
+
+<div class="note">缩放联动：置于缩放画布（fit / stretch，见 <a href="../advanced/canvas-scale.html">5.6 视口画布缩放</a>）时，字号随复合缩放系数重建；不可见时延后重建，变为可见的当帧自动补重建。</div>
+
+<h2>4.9.1 控件的创建</h2>
+
+<pre><code>// C++
+EditBox(Control* parent, SRect rect, float xScale = 1.0f, float yScale = 1.0f);
+EditBoxBuilder(parent, SRect(50, 50, 300, 40)).setPlaceholder("Type here...").build();
+
+// C ABI
+UIControlHandle edit = UICornerstone_CreateEditBox(g_inst, 20, 193, 240, 95, 1.0f, 1.0f);
+
+// JSON
+{ "type": "edit-box", "id": "nameEdit",
+  "rect": { "x": 110, "y": 20, "w": 250, "h": 30 },
+  "placeholder": "Please input your name",
+  "font": { "size": 16 },
+  "colors": { "background": { "normal": "#404040FF" }, "border": { "normal": "#606060FF" } } }</code></pre>
+
+
+<h2>4.9.2 控件的属性</h2>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td><code>align</code></td><td><code>kAlign</code></td><td>Enum</td><td><code>kAlignLowerMidLeft</code></td><td>9 值：<code><code>kAlignLowerTopLeft</code> / <code>kAlignLowerMidLeft</code> / <code>kAlignLowerBottomLeft</code> / <code>kAlignLowerTopRight</code> / <code>kAlignLowerMidRight</code> / <code>kAlignLowerBottomRight</code> / <code>kAlignLowerTopCenter</code> / <code>kAlignLowerCenter</code> / <code>kAlignLowerBottomCenter</code></code></td></tr>
+<tr><td><code>font</code></td><td><code>kFont</code></td><td>Enum</td><td>HarmonyOS_Sans_SC_Regular</td><td>字体名（如 <code>harmonyos-sans-sc-regular</code>）</td></tr>
+<tr><td><code>font-size</code></td><td><code>kFontSize</code></td><td>Int</td><td>16</td><td>字号</td></tr>
+<tr><td><code>password-mode</code></td><td><code>kPasswordMode</code></td><td>Bool</td><td>false</td><td>密码模式开关</td></tr>
+<tr><td><code>read-only</code></td><td><code>kReadOnly</code></td><td>Bool</td><td>false</td><td>只读（P0-83）：禁编辑/插入，保留选择/复制/滚动/光标/焦点（TextArea 继承生效）</td></tr>
+<tr><td><code>placeholder</code></td><td><code>kPlaceholder</code></td><td>String</td><td>空</td><td>占位符</td></tr>
+<tr><td><code>text</code></td><td><code>kTextContent</code></td><td>String</td><td>空</td><td>文本内容</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+<p>通用：<code>background / border / text</code>（StateColor）、<code>visible / enabled / transparent / border-visible</code>。</p>
+
+
+<h2>4.9.3 控件的回调</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>enter</code></td><td><code>kEventEnter</code></td><td>焦点态按 Enter</td><td>无</td></tr>
+<tr><td><code>text-changed</code></td><td><code>kEventTextChanged</code></td><td>setText 或每次输入插入 / 删除文本后</td><td>String（strVal 指向全文）</td></tr>
+</table>
+
+
+<h2>4.9.4 JSON 语法</h2>
+
+<pre><code>{
+  "type": "edit-box", "id": "nameEdit",
+  "rect": { "x": 110, "y": 20, "w": 250, "h": 30 },
+  "placeholder": "Please input your name",
+  "text": "Default text",
+  "font": { "size": 16 },
+  "colors": { "background": { "normal": "#404040FF" }, "border": { "normal": "#606060FF" } },
+  "events": { "onTextChanged": "onNameChanged", "onEnter": "onNameEnter" }
+}</code></pre>
+
+
+<h2>4.9.5 C++ Binding 样例</h2>
+
+<pre><code>auto edit = ui->CreateEditBox(20, 193, 240, 95);
+edit.SetString(PropertyNames::kPlaceholder, "Type here...");
+edit.SetBool(PropertyNames::kPasswordMode, false);
+edit.SetCallback(PropertyNames::kEventTextChanged, [](const Event& e) {
+    printf("text: %s\n", e.GetTextChanged().c_str());
+});
+edit.SetCallback(PropertyNames::kEventEnter, [](const Event&) {
+    printf("Enter pressed\n");
+});</code></pre>
+
+
+<h2>4.9.6 C ABI 调用样例</h2>
+
+<pre><code>UIControlHandle box = UICornerstone_CreateEditBox(g_inst, 20, 20, 200, 30, 1.0f, 1.0f);
+
+UICornerstone_SetString(g_inst, box, "text", "hello");
+UICornerstone_SetString(g_inst, box, "placeholder", "请输入…");
+UICornerstone_SetBool(g_inst, box, "password-mode", 1);
+UICornerstone_SetBool(g_inst, box, "read-only", 1);   // P0-83：只读（禁编辑，可选复制）
+
+static void onTextChanged(UIControlHandle ctl, const UIEventData* ev, void* ud) {
+    /* ev->data.strVal 为当前文本 */
+}
+UICornerstone_SetCallback(g_inst, box, "text-changed", onTextChanged, NULL);</code></pre>
+<details class="methods">
+<summary>4.9.7 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>copy()</code> / <code>cut()</code> / <code>paste()</code> / <code>deleteSelectedText()</code></td><td>剪贴板（Ctrl+C / X / V）</td></tr>
+<tr><td><code>selectAll()</code> / <code>setSelection(int,int)</code> / <code>clearSelection()</code> / <code>getSelectedText()</code> / <code>hasSelection()</code></td><td>选区操作</td></tr>
+<tr><td><code>setAlignmentMode(AlignmentMode)</code> / <code>getAlignmentMode()</code></td><td>对齐（默认 AM_MID_LEFT）</td></tr>
+<tr><td><code>setBoolProperty / setIntProperty / setStringProperty / setEnumProperty</code>（+getter）、<code>setCallbackProperty</code></td><td>属性分发</td></tr>
+<tr><td><code>setFocused(bool, bool)</code> / <code>onFocusGained(bool)</code> / <code>onFocusLost()</code> / <code>isFocused()</code></td><td>焦点管理</td></tr>
+<tr><td><code>setFont(FontName)</code> / <code>setFontSize(int)</code> / <code>getFont()</code></td><td>字体（默认字号 16）</td></tr>
+<tr><td><code>setMargin(Margin)</code> / <code>getMargin()</code></td><td>内边距</td></tr>
+<tr><td><code>setOnTextChanged(OnTextChangedHandler)</code> / <code>setOnEnter(OnEnterHandler)</code></td><td>文本变化 / 回车回调</td></tr>
+<tr><td><code>setPasswordMode(bool)</code> / <code>isPasswordMode()</code> / <code>setPasswordChar(char)</code></td><td>密码模式（默认掩码字符 <code>*</code>）</td></tr>
+<tr><td><code>setPlaceholder(string)</code> / <code>getPlaceholder()</code></td><td>占位符文本</td></tr>
+<tr><td><code>setText(string)</code> / <code>getText()</code> / <code>getCursorPosition()</code></td><td>文本与光标位置</td></tr>
+</table>
+
+</details>
+
+
+
+
+<div class="chapter-nav">
+  <a href="dialog.html">← 4.8 Dialog / Popup</a>
+  <a href="handlecontrol.html">下一节：4.10 HandleControl →</a>
+</div>
+
+</div>
+</body>
+</html>

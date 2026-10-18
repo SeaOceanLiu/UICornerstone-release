@@ -1,0 +1,152 @@
+﻿ï»¿ï»¿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.24 TextArea - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/textarea.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.24 TextArea（多行文本输入）</h1>
+
+<p>TextArea 是多行文本输入控件：按 \n 分行 + 自动换行（word wrap）、垂直 / 水平内置滚动条、光标与选区、剪贴板（Ctrl+C/V/X）。继承链：<code>TextArea → EditBox → ControlImpl → Control</code>（继承 EditBox 全部文本能力）。</p>
+
+<div class="note">缩放联动：置于缩放画布（fit / stretch，见 <a href="../advanced/canvas-scale.html">5.6 视口画布缩放</a>）时，字号随复合缩放系数重建；滚动范围保持本地语义恒定，不随字号漂移。</div>
+
+<h2>4.24.1 控件的创建</h2>
+
+<pre><code>// C++
+TextArea(Control* parent, SRect rect, float xScale = 1.0f, float yScale = 1.0f);
+TextAreaBuilder(parent, SRect(750, 360, 200, 100), 2.0f, 2.0f)
+    .setText("2x scaled TextArea").setWordWrap(true).setLineHeight(22).build();
+
+// C ABI
+UIControlHandle ta = UICornerstone_CreateTextArea(g_inst, 5, 5, 750, 160, 1.0f, 1.0f);
+
+// JSON
+{ "type": "text-area", "id": "notesTextArea",
+  "rect": { "x": 20, "y": 432, "w": 200, "h": 80 },
+  "placeholder": "Multi-line notes...",
+  "word-wrap": true,
+  "auto-scroll": false,
+  "font": { "size": 12 },
+  "colors": { "background": { "normal": "#353535FF" }, "border": { "normal": "#606060FF" } },
+  "events": { "onTextChanged": "onNotesChanged" } }</code></pre>
+
+
+<h2>4.24.2 控件的属性</h2>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td><code>line-height</code></td><td><code>kLineHeight</code></td><td>Int</td><td>—</td><td>行高</td></tr>
+<tr><td><code>scroll-x</code></td><td><code>kScrollX</code></td><td>Int</td><td>0</td><td>滚动位置</td></tr>
+<tr><td><code>scroll-y</code></td><td><code>kScrollY</code></td><td>Int</td><td>0</td><td>滚动位置</td></tr>
+<tr><td><code>scrollbar-thickness</code></td><td><code>kScrollbarThickness</code></td><td>Float</td><td>16</td><td>滚动条粗细</td></tr>
+<tr><td><code>text</code></td><td><code>kTextContent</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>placeholder</code></td><td><code>kPlaceholder</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>password-mode</code></td><td><code>kPasswordMode</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>read-only</code></td><td><code>kReadOnly</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>font</code></td><td><code>kFont</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>font-size</code></td><td><code>kFontSize</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>align</code></td><td><code>kAlign</code></td><td>多类型</td><td>—</td><td>见 <a href="editbox.html">4.24 EditBox</a></td></tr>
+<tr><td><code>word-wrap</code></td><td><code>kWordWrap</code></td><td>Bool</td><td>—</td><td>自动换行</td></tr>
+<tr><td><code>auto-scroll</code></td><td><code>kAutoScroll</code></td><td>Bool</td><td>false</td><td>false=编辑式光标跟随（缺省）；true=日志式恒滚到底。false 下 <code>setText</code> 整体替换不自动滚动，需显式 <code>scrollToBottom()</code> 或设 true</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+
+<h2>4.24.3 控件的回调</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>enter</code></td><td><code>kEventEnter</code></td><td>按下 Enter（继承 EditBox）</td><td>无</td></tr>
+<tr><td><code>text-changed</code></td><td><code>kEventTextChanged</code></td><td>文本任何变化</td><td>String（全文）</td></tr>
+</table>
+
+
+<h2>4.24.4 JSON 语法</h2>
+
+<pre><code>{
+  "type": "text-area",
+  "id": "notesTextArea",
+  "rect": { "x": 20, "y": 432, "w": 200, "h": 80 },
+  "placeholder": "Multi-line notes...",
+  "word-wrap": true,
+  "auto-scroll": false,
+  "font": { "size": 12 },
+  "colors": { "background": { "normal": "#353535FF" }, "border": { "normal": "#606060FF" } },
+  "events": { "onTextChanged": "onNotesChanged" }
+}</code></pre>
+
+
+<h2>4.24.5 C++ Binding 样例</h2>
+
+<pre><code>Control ta = ui->CreateTextArea(20, 432, 200, 80);
+ta.SetString(PropertyNames::kText, "Hello from TextArea!\nEdit me.");
+ta.SetBool(PropertyNames::kWordWrap, true);
+ta.SetCallback(PropertyNames::kEventTextChanged, [](const Event& e) {
+    printf("text: %s\n", e.GetTextChanged().c_str());
+});
+
+// C++ 核心库
+auto ta2 = TextAreaBuilder(nullptr, SRect(750, 360, 200, 100), 2.0f, 2.0f)
+    .setText("2x scaled TextArea")
+    .setWordWrap(true).setLineHeight(22)
+    .setOnTextChanged([](shared_ptr<Control>, string text) {
+        cout << "TextArea changed" << endl;
+    })
+    .build();
+BENCH->addControl(ta2);</code></pre>
+
+<div class="note">滚动条内置于控件底部 / 右侧，内容超出时自动显示。</div>
+
+
+<h2>4.24.6 C ABI 调用样例</h2>
+
+<pre><code>UIControlHandle ta = UICornerstone_CreateTextArea(g_inst, 20, 20, 300, 200, 1.0f, 1.0f);
+
+UICornerstone_SetString(g_inst, ta, "text", "第一行\n第二行");
+UICornerstone_SetBool(g_inst, ta, "read-only", 1);
+UICornerstone_SetBool(g_inst, ta, "word-wrap", 1);
+
+static void onTextChanged(UIControlHandle ctl, const UIEventData* ev, void* ud) { }
+UICornerstone_SetCallback(g_inst, ta, "text-changed", onTextChanged, NULL);</code></pre>
+<details class="methods">
+<summary>4.24.7 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>deleteSelectedText()</code></td><td>删除选中</td></tr>
+<tr><td><code>insertText(string)</code></td><td>插入（在 EditBox 基础上重建行）</td></tr>
+<tr><td><code>insertTextAtCursor(string)</code></td><td>光标处插入</td></tr>
+<tr><td><code>scrollToBottom()</code></td><td>滚到底部</td></tr>
+<tr><td><code>setLineHeight(int)</code> / <code>getLineHeight()</code></td><td>行高</td></tr>
+<tr><td><code>setOnTextChangedHandler(OnTextChangedHandler)</code></td><td>文本变化回调</td></tr>
+<tr><td><code>setRect(SRect)</code></td><td>重设尺寸并同步滚动条</td></tr>
+<tr><td><code>setScrollBarThickness(float)</code> / <code>getScrollBarThickness()</code></td><td>滚动条粗细（默认 16）</td></tr>
+<tr><td><code>setScrollY(int)</code> / <code>getScrollY()</code>、<code>setScrollX(int)</code> / <code>getScrollX()</code></td><td>垂直 / 水平滚动</td></tr>
+<tr><td><code>setText(string)</code></td><td>设置全文（重建行 + 更新滚动条）</td></tr>
+<tr><td><code>setWordWrap(bool)</code> / <code>isWordWrap()</code></td><td>自动换行开关</td></tr>
+<tr><td><code>update()</code> / <code>draw()</code> / <code>handleEvent(Event)</code></td><td>帧更新 / 绘制 / 事件（文本输入、Enter 插入 \n、滚动条委托、鼠标定位光标、Ctrl+C/V/X、光标导航）</td></tr>
+</table>
+
+</details>
+
+
+
+
+<div class="chapter-nav">
+  <a href="tabcontrol.html">← 4.23 TabControl（选项卡）</a>
+  <a href="treeview.html">下一节：4.25 TreeView →</a>
+</div>
+
+</div>
+</body>
+</html>

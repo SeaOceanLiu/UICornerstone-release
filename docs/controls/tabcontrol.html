@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.23 TabControl（选项卡） - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/tabcontrol.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.23 TabControl（选项卡）</h1>
+
+<p>TabControl 多页签控件：页签条四方向（上/下/左/右），页面为任意控件子树。两层焦点作用域：Tab 在页内控件循环，Ctrl+Tab 在「页签条 ↔ 页内」间切换。继承链：<code>TabControl → ControlImpl → Control</code>。设计文档见 <code>design/TabControl_Design.md</code>。</p>
+
+<h2>4.23.1 控件的创建</h2>
+
+<pre><code>// C++
+auto tc = TabControlBuilder(nullptr, SRect(120, 80, 560, 240))
+              .addTab(u8"主页", page1).addTab(u8"设置", page2).build();
+
+// C ABI
+UIControlHandle tc = UICornerstone_CreateTabControl(g_inst, 120, 80, 560, 240, 1, 1);
+UICornerstone_TabAddPage(g_inst, tc, u8"主页");
+
+// JSON
+{ "type": "tab-control", "rect": {"x":120,"y":80,"w":560,"h":240}, "position": "top",
+  "tabs": [ {"title": "主页", "page": {"type": "panel"}} ],
+  "events": { "onTabChange": "onTab" } }</code></pre>
+
+<h2>4.23.2 控件的属性</h2>
+
+<table>
+<tr><th>属性/字段</th><th>属性常量</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td><code>position</code></td><td><code>kTabPosition</code></td><td>Enum</td><td>top</td><td>top / bottom / left / right</td></tr>
+<tr><td><code>font-size</code></td><td><code>kFontSize</code></td><td>Int</td><td>13</td><td>页签文字字号</td></tr>
+<tr><td><code>currentIndex</code></td><td><code>kTabCurrentIndex</code></td><td>Int</td><td>0</td><td>当前页（首页自动选中）</td></tr>
+<tr><td><code>hovered-tab</code></td><td><code>kHoveredTab</code></td><td>Int</td><td>—</td><td><b>只读</b>（P0-91）：鼠标悬停页签索引；点击帧读 ≥0=点中该项 / -1=空白页签</td></tr>
+<tr><td colspan="5">JSON 可声明（P0-92）：<code>tab-background</code> / <code>tab-hover-background</code> / <code>tab-selected-background</code> / <code>tab-indicator-color</code> / <code>tab-content-background</code>（单色）、<code>selected-text</code>（字符串）、<code>page-background</code>（字符串或四态对象，转发所有页）</td></tr>
+<tr><td><code>tab-background</code></td><td><code>kTabBackground</code></td><td>Color</td><td>(37,37,42)</td><td>常态页签底色（P0-90，单色）</td></tr>
+<tr><td><code>tab-hover-background</code></td><td><code>kTabHoverBackground</code></td><td>Color</td><td>(60,60,70)</td><td>悬停页签底色（P0-90）</td></tr>
+<tr><td><code>tab-selected-background</code></td><td><code>kTabSelectedBackground</code></td><td>Color</td><td>(45,45,52)</td><td>选中页签底色（P0-90）</td></tr>
+<tr><td><code>tab-indicator-color</code></td><td><code>kTabIndicatorColor</code></td><td>Color</td><td>(0,122,204)</td><td>选中指示条色（P0-90）</td></tr>
+<tr><td><code>tab-content-background</code></td><td><code>kTabContentBackground</code></td><td>Color</td><td>(50,50,56)</td><td>内容区底色（P0-90）</td></tr>
+</table>
+
+<h2>4.23.3 控件的回调 / 事件</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>onTabChange</code></td><td><code>kEventTabChanged</code>（<code>"tab-changed"</code>）</td><td>页签切换（setCurrentIndex / 点击 / 键盘）</td><td>intVal = 新页索引</td></tr>
+</table>
+
+<h2>4.23.4 键盘导航</h2><p>页签条获焦：<code>←/→</code>（或竖排 <code>↑/↓</code>）循环切换、<code>Home/End</code> 首尾；<code>Tab</code> 层内循环（页内控件间 / 页签条+外部）；<code>Ctrl+Tab</code> 层切换（页内 ↔ 页签条）。</p>
+
+
+
+
+
+
+<h2>4.23.5 JSON 语法</h2>
+
+<pre><code>{
+  "type": "tab-control", "id": "tabs", "rect": { "x": 120, "y": 80, "w": 560, "h": 240 },
+  "position": "top", "font-size": 13, "currentIndex": 0,
+  "tabs": [
+    { "title": "主页", "icon": "provider:icons/home", "page": { "type": "panel" } },
+    { "title": "设置", "page": { "type": "panel" } }
+  ],
+  "events": { "onTabChange": "onTab" }
+}</code></pre>
+
+<table>
+<tr><th>JSON 键</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>tabs[].icon</code></td><td>资源引用</td><td>页签图标</td></tr>
+</table>
+
+<h2>4.23.6 C++ Binding 样例</h2>
+
+<pre><code>auto tc = ui->CreateTabControl(120, 80, 560, 240);
+tc.SetEnum(PropertyNames::kTabPosition, PropertyNames::kTabPositionTop);
+tc.SetInt(PropertyNames::kTabCurrentIndex, 0);
+tc.SetCallback(PropertyNames::kEventTabChanged, onTab);</code></pre>
+
+<h2>4.23.7 C ABI 调用样例</h2>
+
+<pre><code>UIControlHandle tc = UICornerstone_CreateTabControl(g_inst, 120, 80, 560, 240, 1.0f, 1.0f);
+int idx = UICornerstone_TabAddPage(g_inst, tc, u8"主页");
+UIControlHandle pg = UICornerstone_CreatePanel(g_inst, 0, 0, 100, 100, 1.0f, 1.0f);
+UICornerstone_TabSetPage(g_inst, tc, idx, pg);
+UICornerstone_SetEnum(g_inst, tc, "position", "top");</code></pre>
+
+</body>
+</html>
+
+<details class="methods">
+<summary>4.23.8 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>addTab(title, page)</code> / <code>insertTab(index, …)</code> / <code>removeTab(index)</code></td><td>页写（removeTab 钳制 currentIndex）</td></tr>
+<tr><td><code>moveTab(from, to)</code>（C ABI/Binding <code>TabMovePage(tab, from, to)</code>）</td><td>页序调整（P0-91）：完整迁移 title/page/leadingControl；currentIndex 重映射（被移动页跟随新位；区间 ±1）；越界/同位返回 0</td></tr>
+<tr><td><code>TabGetItemRect(tab, index, out)</code>（C ABI/Binding）</td><td>页签项矩形读回（P0-91）：<b>TabControl 局部逻辑坐标</b>（拖排落点/精确点击判定；越界返回 0）</td></tr>
+<tr><td><code>reorderable</code>（属性，通用 SetBool；教程见 <a href="../advanced/drag-drop.html">5.7</a>）</td><td>引擎内置页签拖动排序（P0-96 自含：起拖/自目标/落点/迁移全内置）；宿主自实现等价 = <code>TabGetItemRect</code> 判落点 + <code>TabMovePage</code> 迁移</td></tr>
+<tr><td><code>getTabCount()</code> / <code>getTabs()</code></td><td>页只读访问</td></tr>
+<tr><td><code>setCurrentIndex(i)</code> / <code>getCurrentIndex()</code></td><td>切换（触发 onTabChange + 页面显隐）</td></tr>
+<tr><td><code>setTabText(i, title)</code> / <code>setTabPage(i, page)</code> / <code>setTabLeadingControl(i, ctl)</code></td><td>页内容（触发 relayout；setTabPage 替换旧页时全摘除 + 保活）</td></tr>
+<tr><td><code>removeTab(index)</code></td><td>移除页（全摘除：tab/bench 残留清理 + 隐藏；面板保活，句柄有效可再 setTabPage）</td></tr>
+<tr><td><code>setPosition(TabPosition)</code> / <code>getPosition()</code></td><td>四方向（触发 relayout）</td></tr>
+<tr><td><code>setFontSize(px)</code> / <code>getFontSize()</code></td><td>页签字号（重建字体 + relayout）</td></tr>
+<tr><td><code>setOnTabChange(cb)</code></td><td>切换回调 (shared_ptr&lt;TabControl&gt;, int)</td></tr>
+<tr><td><code>setXxxProperty / getXxxProperty</code>（override）</td><td>属性分发（position/current-index/font-size）</td></tr>
+</table>
+
+</details>
+
+
+
+<div class="chapter-nav">
+  <a href="statusbar.html">← 4.22 StatusBar（状态栏）</a>
+  <a href="textarea.html">下一节：4.24 TextArea →</a>
+</div>
+
+</div>
+</body>
+</html>

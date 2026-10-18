@@ -1,0 +1,163 @@
+﻿ï»¿ï»¿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.3 Button - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/button.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.3 Button（按钮）</h1>
+
+<p>Button 是最常用的交互控件：四态外观（normal/hover/pressed/disabled）、标题文本（内部 Label）、可选 LuotiAni 动画。继承链：<code>Button → ControlImpl → Control</code>。</p>
+
+<h2>4.3.1 控件的创建</h2>
+
+<pre><code>// C++
+Button(Control* parent, SRect rect, float xScale = 1.0f, float yScale = 1.0f);
+ButtonBuilder(parent, SRect(20, 20, 120, 36)).setCaption("OK").setOnClick(cb).build();
+
+// C ABI
+UIControlHandle btn = UICornerstone_CreateButton(g_inst, "OK", 20, 20, 120, 36, 1.0f, 1.0f);
+
+// JSON
+{ "type": "button", "id": "submitBtn", "rect": { "x": 280, "y": 140, "w": 100, "h": 35 },
+  "caption": "Submit", "events": { "onClick": "onSubmitClick" } }</code></pre>
+
+
+<h2>4.3.2 控件的属性</h2>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td><code>animation</code></td><td><code>kAnimation</code></td><td>String</td><td>—</td><td>LuotiAni 描述文件路径：加载并自动播放</td></tr>
+<tr><td><code>background</code></td><td><code>kBackground</code></td><td>StateColor</td><td>主题</td><td>通用状态色（JSON 中支持 .hover/.pressed/.disabled 子键）</td></tr>
+<tr><td><code>border</code></td><td><code>kBorder</code></td><td>StateColor</td><td>主题</td><td>通用状态色（JSON 中支持 .hover/.pressed/.disabled 子键）</td></tr>
+<tr><td><code>text</code></td><td><code>kText</code></td><td>StateColor</td><td>主题</td><td>通用状态色（JSON 中支持 .hover/.pressed/.disabled 子键）</td></tr>
+<tr><td><code>text-shadow</code></td><td><code>kTextShadow</code></td><td>StateColor</td><td>主题</td><td>通用状态色（JSON 中支持 .hover/.pressed/.disabled 子键）</td></tr>
+<tr><td><code>caption</code></td><td><code>kCaption</code></td><td>String</td><td>空</td><td>标题文本</td></tr>
+<tr><td><code>font-size</code></td><td><code>kFontSize</code></td><td>Int</td><td>16</td><td>标题字号（Button 的 caption 由 font-size 统一）</td></tr>
+<tr><td><code>luotiAni</code></td><td><code>kLuotiAni</code></td><td>String / {file}</td><td>—</td><td>JSON 布局键 / 属性系统 <code>SetPtr("luotiAni", ctl)</code>：内嵌动画：挂树后自动延迟 prepare，默认<strong>不自动播放</strong>——<code>SetBool("playing")=1</code> 启动；JSON 可声明 <code>"playing": true</code> 挂树后自动播放（prepare 前设置的播放请求不丢失，<code>animation</code> 属性则立即播放）</td></tr>
+<tr><td><code>shadow</code></td><td><code>kShadow</code></td><td>Object</td><td>{enabled:false}</td><td>文字阴影 <code>{enabled, offset:{x,y}}</code>（#12 统一键；经属性系统转发内部 caption）</td></tr>
+<tr><td><code>visible</code></td><td><code>kVisible</code></td><td>Bool</td><td>—</td><td>通用属性</td></tr>
+<tr><td><code>enabled</code></td><td><code>kEnabled</code></td><td>Bool</td><td>—</td><td>通用属性</td></tr>
+<tr><td><code>transparent</code></td><td><code>kTransparent</code></td><td>Bool</td><td>—</td><td>通用属性</td></tr>
+<tr><td><code>border-visible</code></td><td><code>kBorderVisible</code></td><td>Bool</td><td>—</td><td>通用属性</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+
+<h2>4.3.3 控件的回调</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>click</code></td><td><code>kEventClick</code></td><td>鼠标左键按下后抬起于控件内；或焦点态按 Enter/Space</td><td>无</td></tr>
+</table>
+
+
+<h2>4.3.4 JSON 语法</h2>
+
+<pre><code>{
+  "type": "button", "id": "submitBtn",
+  "rect": { "x": 280, "y": 140, "w": 100, "h": 35 },
+  "caption": "Submit", "font-size": 16,
+  "colors": {
+    "background": { "normal": "#4060A0FF", "hover": "#5080C0FF", "pressed": "#305090FF" },
+    "border": { "normal": "#6080C0FF" },
+    "text":   { "normal": "#FFFFFFFF" }
+  },
+  "events": { "onClick": "onSubmitClick" }
+}</code></pre>
+
+
+<h2>4.3.5 C++ Binding 样例</h2>
+
+<pre><code>auto button = ui->CreateButton("Toggle", 20, 80, 120, 36);
+int count = 0;
+button.SetCallback(PropertyNames::kEventClick, [&](const Event&) {
+    bool vis = label.GetBool(PropertyNames::kVisible);
+    label.SetBool(PropertyNames::kVisible, !vis);
+    label.SetString(PropertyNames::kCaption, "Clicked " + std::to_string(++count));
+});
+// 动态换文案 / 禁用
+button.SetString(PropertyNames::kCaption, "新标题");
+button.SetBool(PropertyNames::kEnabled, false);</code></pre>
+
+<div class="tip">给按钮挂动画：JSON <code>"luotiAni": "assets/animations/rotateBtn/rotateBtn.jsonc"</code> 或 C++ <code>btn->setLuotiAni(shared_ptr&lt;LuotiAni&gt;)</code>，
+或直接用动画按钮工厂 <code>UICornerstone_CreateAnimatedButton</code> / <code>ui-&gt;CreateAnimatedButton(jsoncPath, x, y, w, h, xScale, yScale)</code>
+（scale 作用于按钮本身，内嵌动画恒 1.0，见 <a href="../advanced/scale.html">5.5 控件缩放</a>）。</div>
+
+
+<h2>4.3.6 C ABI 调用样例</h2>
+
+<pre><code>// 创建（见 4.3.1）：工厂 + 初始参数
+UIControlHandle btn = UICornerstone_CreateButton(g_inst, "OK", 20, 20, 120, 36, 1.0f, 1.0f);
+
+// 属性：泛型 Set*，键名见「控件的属性」表
+UICornerstone_SetString(g_inst, btn, "caption", "Submit");
+UICornerstone_SetStateColor(g_inst, btn, "background",
+    (UIStateColor){ {0x4A,0x90,0xD9,0xFF}, {0x5B,0xA0,0xE9,0xFF}, {0x3A,0x80,0xC9,0xFF}, {0x80,0x80,0x80,0xFF} });
+
+// 回调：事件名见「控件的回调」表
+static void onBtnClick(UIControlHandle ctl, const UIEventData* ev, void* ud) {
+    /* 点击处理 */
+}
+UICornerstone_SetCallback(g_inst, btn, "click", onBtnClick, NULL);
+
+// 通用操作
+UICornerstone_SetRect(g_inst, btn, 20, 20, 140, 40);
+UICornerstone_DestroyControl(g_inst, btn);   // 不再需要时销毁</code></pre>
+<details class="methods">
+<summary>4.3.7 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>setBoolProperty / setStringProperty</code>（override）</td><td>属性分发</td></tr>
+<tr><td><code>setCaption(string)</code> / <code>getCaption()</code></td><td>标题文本（自动创建内部 Label）</td></tr>
+<tr><td><code>setCaptionLabel(shared_ptr&lt;Label&gt;) / getCaptionLabel()</code></td><td>嵌入自定义 Label（布局解析器用）</td></tr>
+<tr><td><code>setCaptionSize(float) / getCaptionSize() / getCaptionRect()</code></td><td>标题字号 / 热区</td></tr>
+<tr><td><code>setLuotiAni(shared_ptr&lt;LuotiAni&gt;)</code></td><td>挂载洛蒂动画</td></tr>
+<tr><td><code>setNormalStateActor / setHoverStateActor / setPressedStateActor / setDisabledStateActor(shared_ptr&lt;Actor&gt;)</code></td><td>四状态图片外观</td></tr>
+<tr><td><code>setOnClick(OnClickHandler)</code></td><td>点击回调 <code>void(shared_ptr&lt;Button&gt;)</code></td></tr>
+<tr><td><code>setTextShadowEnable(bool)</code></td><td>文字阴影开关</td></tr>
+<tr><td><code>setTextStateColor / setTextShadowStateColor(StateColor)</code></td><td>文本色 / 阴影色（同步到内部 Label）</td></tr>
+</table>
+
+</details>
+
+
+
+
+<h2>内部 caption Label 的直控（caption-label）</h2>
+
+<p>Button 的文本由内部 caption Label 绘制；通用单色 <code>SetColor("text" / "text-shadow")</code> 作用于 Button 自身字段，不改变 caption 显示。需要控制 caption 的颜色/字体/对齐时，经 <code>caption-label</code> 句柄直控其标准属性：</p>
+
+<pre><code>// C ABI：读内部 Label 句柄 → 直控标准属性
+void* cap = NULL;
+UICornerstone_GetPtr(inst, btn, "caption-label", &amp;cap);
+UIColor red = { 255, 0, 0, 255 };
+UICornerstone_SetColor(inst, cap, "text", red);            // 单色
+UICornerstone_SetStateColor(inst, cap, "text", stateColor);// 或 4 态
+
+// C++ Binding
+Control cap = ui-&gt;FromHandle(btn.GetPtr("caption-label"));
+cap.SetColor(PropertyNames::kText, color);
+cap.SetInt(PropertyNames::kFontSize, 18);
+</code></pre>
+
+<p class="note">各态色（<code>text.hover</code>/<code>.pressed</code>/<code>.disabled</code>、<code>text-shadow.*</code>）随 Button 状态自动生效（hover/按下/禁用时 caption 跟随取色）。句柄约定：<code>GetPtr</code> 返回控件句柄（可直接用于任一控件属性 API）；非 Button 控件无此键（返回 0）。JSON 布局键 <code>caption-label</code> 与运行时属性键同键（同常量 <code>kCaptionLabel</code>），<code>"caption-label": { caption, font, alignment }</code> 自定义配置随 LoadLayout 生效。</p>
+
+<div class="chapter-nav">
+  <a href="bench.html">← 4.2 Bench（测试台/根）</a>
+  <a href="checkbox.html">下一节：4.4 CheckBox →</a>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,334 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8 C ABI 速查表 - UICornerstone v1.1.1 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="appendix/capi.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>8 C ABI 速查表</h1>
+
+<p>头文件：<code>include/UICornerstoneAPI.h</code>。所有函数线程安全要求：UI 调用在主线程。</p>
+
+<h2>8.1 实例管理</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_CreateInstance(label, config)</code></td><td>创建 UI 实例（config 可 NULL）</td></tr>
+<tr><td><code>UICornerstone_CreateInstanceFromPlugin(name, config)</code></td><td>从后端插件名创建（"sdl3"/"sfml"/"raylib"）</td></tr>
+<tr><td><code>UICornerstone_CreateViewport(inst, x, y, w, h)</code></td><td>在当前窗口内创建子视口（单窗口多视口，见 <a href="../advanced/multiwindow.html">5.2</a>）</td></tr>
+<tr><td><code>UICornerstone_DestroyInstance(inst)</code></td><td>销毁实例</td></tr>
+<tr><td><code>UICornerstone_GetBackendCapabilities(inst)</code></td><td>能力位（UICORN_BACKEND_CAP_*，含 WINDOW_SET_SIZE：运行期 SetWindowSize 可用）</td></tr>
+<tr><td><code>UICornerstone_GetWindowSize(inst, &amp;w, &amp;h)</code></td><td>运行期窗口尺寸（headless 返回 0×0；v1.1.1 增）</td></tr>
+<tr><td><code>UICornerstone_SetWindowSize(inst, w, h)</code></td><td>请求窗口 resize（真实调整经后端，尺寸变化经 WindowResize 事件回流；headless 返回 0；v1.1.1 增）</td></tr>
+<tr><td><code>UICornerstone_GetNativeWindowHandle(inst)</code></td><td>原生窗口句柄（嵌入/hosted 场景；无窗口返回 NULL；v1.1.1 增）</td></tr>
+<tr><td><code>UICornerstone_SetWindowResizeCallback(inst, cb, ud)</code></td><td>窗口尺寸变化回调 (w,h,ud)，替代帧内轮询（v1.1.1 增）</td></tr>
+<tr><td><code>UICornerstone_SetDropFileCallback(inst, cb, ud)</code></td><td>OS 文件/文本拖放回调（P0-100）：ctl=NULL、<code>data.dropFile.{path,x,y,isText}</code>；泵内触发——仅轻量记录、重活延帧；NULL 解绑</td></tr>
+<tr><td><code>UICornerstone_GetViewport(inst, &amp;x, &amp;y, &amp;w, &amp;h)</code></td><td>查询当前视口</td></tr>
+<tr><td><code>UICornerstone_GetViewportScale(inst, &amp;sx, &amp;sy)</code></td><td>当前复合缩放系数</td></tr>
+<tr><td><code>UICornerstone_SetInstanceScale(inst, x, y)</code></td><td>实例缩放（画布语义）：逻辑 rect 不变、视觉/字号×比例；x/y≤0 拒绝；off 分支 recompute 尊重手动值，fit/stretch 切换引擎接管（v1.1.1）</td></tr>
+<tr><td><code>UICornerstone_GetInstanceScale(inst, &amp;x, &amp;y)</code></td><td>读取实例缩放（复合快照）</td></tr>
+<tr><td><code>UICornerstone_GetViewportScaleMode(inst, &amp;mode)</code></td><td>查询当前缩放模式</td></tr>
+<tr><td><code>UICornerstone_IsQuitRequested(inst)</code></td><td>窗口关闭请求查询</td></tr>
+<tr><td><code>UICornerstone_ProcessEvents / Update / Clear / Render / Present</code></td><td>主循环五步</td></tr>
+<tr><td><code>UICornerstone_RenderOverlays(inst)</code></td><td>浮层渲染通道（P0-52①）：仅重绘 BENCH 顶层可见浮层（Popup/ConfirmPopup/Dialog/MenuPanel，含子树），按实例 viewport 裁剪。多视口帧序：<code>Clear → owner.Render → 各子视口 Render → RenderOverlays → Present</code>（Present 前调用；无浮层零开销，未调用行为同既有版本）</td></tr>
+<tr><td><code>UICornerstone_PushUIEvent(inst, ev)</code></td><td>投递事件到实例队列（跨线程安全，自动化测试 auto 退出即经此）；P0-101：<code>UI_EVENT_DROP_FILE</code> 指针式载荷在 push 时深拷贝（源串可立即释放）</td></tr>
+<tr><td><code>UICornerstone_SetCanvasSize(inst, w, h)</code></td><td>显式基准画布尺寸（fit/stretch 适配基准；off 下仅记录）</td></tr>
+<tr><td><code>UICornerstone_SetViewport(inst, x, y, w, h)</code></td><td>设置视口</td></tr>
+<tr><td><code>UICornerstone_SetViewportAnchor(inst, ax, ay)</code></td><td>手动锚点偏移（增量叠加，off 模式手动平移）</td></tr>
+<tr><td><code>UICornerstone_SetViewportBackgroundColor(inst, r, g, b, a)</code></td><td>视口背景色（RGBA8888，默认透明=不填充；fit 黑边区填充色）</td></tr>
+<tr><td><code>UICornerstone_SetViewportScaleMode(inst, mode)</code></td><td>视口缩放模式：0=off（画布跟随窗口）1=fit（等比居中）2=stretch（拉伸铺满）</td></tr>
+</table>
+
+<h3>8.1.1 后端能力位宏</h3>
+<table>
+<tr><th>宏（<code>include/UICornerstoneAPI.h</code>）</th><th>位</th><th>语义</th></tr>
+<tr><td><code>UICORN_BACKEND_CAP_MULTI_WINDOW</code></td><td>1u &lt;&lt; 0</td><td>多实例独立窗口渲染（Raylib 单窗口架构不声明）</td></tr>
+<tr><td><code>UICORN_BACKEND_CAP_RENDER_TARGET</code></td><td>1u &lt;&lt; 1</td><td>渲染目标（RTT）</td></tr>
+<tr><td><code>UICORN_BACKEND_CAP_CLIP_RECT</code></td><td>1u &lt;&lt; 2</td><td>裁剪矩形</td></tr>
+<tr><td><code>UICORN_BACKEND_CAP_READBACK</code></td><td>1u &lt;&lt; 3</td><td>像素回读（readPixels）</td></tr>
+<tr><td><code>UICORN_BACKEND_CAP_WINDOW_SET_SIZE</code></td><td>1u &lt;&lt; 4</td><td>运行期 <code>SetWindowSize</code> 可用（v1.1.1 增；headless 实例返回 0）</td></tr>
+</table>
+
+<h2>8.2 布局加载</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_FindControl(inst, id)</code></td><td>按 id 查找控件句柄</td></tr>
+<tr><td><code>UICornerstone_SetControlId(inst, ctl, id)</code></td><td>给编程式创建的控件设置 id（注册到实例 id 表，供 FindControl 查询；<code>id</code> 空串移除该控件名下全部 id——空串移除幂等）</td></tr>
+<tr><td><code>UICornerstone_SetHandleTarget(inst, handle, target)</code></td><td>切换手柄附加目标（NULL = detach：移出容器+恢复光标）</td></tr>
+<tr><td><code>UICornerstone_HandleHitTest(inst, handle, x, y, &amp;type)</code></td><td>手柄命中查询（None=0、Move=1、NW=2…W=9；命中返回 1）</td></tr>
+<tr><td><code>UICornerstone_SetHandleRectFilter(inst, handle, filter, user)</code></td><td>拖拽几何过滤回调（局部坐标 io 修正，返回 1 用修正值；吸附/对齐线扩展点）</td></tr>
+<tr><td><code>UICornerstone_SetHandleMoveVisible(inst, handle, show)</code></td><td>Move 手柄可见性开关</td></tr>
+<tr><td><code>UICornerstone_LoadLayout(inst, json)</code></td><td>从内存 JSON 字符串加载布局</td></tr>
+<tr><td><code>UICornerstone_LoadLayoutFromFile(inst, path)</code></td><td>从文件加载布局</td></tr>
+<tr><td><code>UICornerstone_RegisterAction(inst, name, cb, user)</code></td><td>注册 JSON 事件处理器</td></tr>
+</table>
+
+<h2>8.3 控件工厂</h2>
+
+<p>所有创建函数末尾均带 <code>xScale, yScale</code>（初始缩放系数，内容按系数渲染；传 <code>1.0f, 1.0f</code> 保持原尺寸，与 JSON 的 <code>"scale": {"x":..,"y":..}</code> 等价）。</p>
+
+<table>
+<tr><th>函数</th><th>返回控件</th></tr>
+<tr><td><code>UICornerstone_GetRoot(inst)</code></td><td>取根句柄（P0-61：本实例 bench；子视口实例返回其自身 bench）——根级布局/锚定入口（配合 child-id + layout/anchor/anchor-offset-x/y）</td></tr>
+<tr><td><code>UICornerstone_AddChildControl(inst, parent, child)</code></td><td>挂载/重挂子控件（P0-50：任意旧父自动摘除，跨容器 reparent 无双挂载；非 Panel 父/自身/祖先环 → 静默 no-op）</td></tr>
+<tr><td><code>UICornerstone_RemoveChild(inst, parent, child)</code></td><td>摘除子控件（P0-50：<b>不销毁</b>，实例级保活可反复挂载；要求 child 当前父 == parent；返回 1/0）</td></tr>
+<tr><td><code>UICornerstone_CreateActor(inst, image, x, y, w, h, xScale, yScale)</code></td><td>Actor（静态图片控件，image 可 NULL；w/h=0 → 纹理自然尺寸）</td></tr>
+<tr><td><code>UICornerstone_CreateAnimatedButton(inst, jsoncPath, x, y, w, h, xScale, yScale)</code></td><td>带动画的 Button（jsoncPath 可 NULL=纯按钮；内嵌动画构造 scale 恒 1.0，xScale/yScale 作用于按钮本身，双重缩放陷阱见 <a href="../advanced/scale.html">5.5</a>）</td></tr>
+<tr><td><code>UICornerstone_CreateAnimation(inst, jsoncPath, x, y, w, h, xScale, yScale)</code></td><td>LuotiAni</td></tr>
+<tr><td><code>UICornerstone_CreateButton(inst, text, x, y, w, h, xScale, yScale)</code></td><td>Button</td></tr>
+<tr><td><code>UICornerstone_CreateCheckBox(inst, text, x, y, w, h, xScale, yScale)</code></td><td>CheckBox</td></tr>
+<tr><td><code>UICornerstone_CreateColorPicker(inst, x, y, w, h, color, xScale, yScale)</code></td><td>ColorPicker</td></tr>
+<tr><td><code>UICornerstone_CreateComboBox(inst, x, y, w, h, xScale, yScale)</code></td><td>ComboBox</td></tr>
+<tr><td><code>UICornerstone_CreateContextMenu(inst, x, y, w, h, xScale, yScale)</code></td><td>ContextMenu（右键菜单；项经 ContextMenuAddItem，绑定经 SetPtr("context-menu")）</td></tr>
+<tr><td><code>UICornerstone_CreateDialog(inst, confirmText, cancelText, x, y, w, h, xScale, yScale)</code></td><td>Dialog（创建即打开）</td></tr>
+<tr><td><code>UICornerstone_CreateEditBox(inst, x, y, w, h, xScale, yScale)</code></td><td>EditBox</td></tr>
+<tr><td><code>UICornerstone_CreateHandleControl(inst, target, x, y, w, h, xScale, yScale)</code></td><td>HandleControl</td></tr>
+<tr><td><code>UICornerstone_CreateImage(inst, image, x, y, w, h, xScale, yScale)</code></td><td>Image（Actor）</td></tr>
+<tr><td><code>UICornerstone_SetBool(inst, ctl, "clip-children", 1)</code></td><td>Panel 子项裁剪：超出容器不绘制（默认 0=关闭，v1.1.1）</td></tr>
+<tr><td><code>UICornerstone_ActorSetSourceRect(inst, ctl, x, y, w, h)</code></td><td>Actor 源矩形（纹理子区域；对 stretch/tile 生效；x&lt;0 或 w≤0 或 h≤0 恢复整图；v1.1.1）</td></tr>
+<tr><td><code>UICornerstone_CreateLabel(inst, text, fontSize, x, y, w, h, xScale, yScale)</code></td><td>Label</td></tr>
+<tr><td><code>UICornerstone_CreateListView(inst, x, y, w, h, xScale, yScale)</code></td><td>ListView（列/行经 ListViewAddColumn / ListViewAddRow 等）</td></tr>
+<tr><td><code>UICornerstone_CreateMenuBar / CreateMenuPanel / CreateMenuItem(inst, caption, type)</code></td><td>Menu 三件套</td></tr>
+<tr><td><code>UICornerstone_CreateNumericUpDown(inst, x, y, w, h, xScale, yScale)</code></td><td>NumericUpDown</td></tr>
+<tr><td><code>UICornerstone_CreatePanel(inst, x, y, w, h, xScale, yScale)</code></td><td>Panel</td></tr>
+<tr><td><code>UICornerstone_CreateProgressBar(inst, x, y, w, h, xScale, yScale)</code></td><td>ProgressBar</td></tr>
+<tr><td><code>UICornerstone_CreateScrollBar(inst, x, y, w, h, orientation, xScale, yScale)</code></td><td>ScrollBar</td></tr>
+<tr><td><code>UICornerstone_CreateShape(inst, x, y, w, h, xScale, yScale)</code></td><td>Shape（图元经 ShapeAddPrimitive 等）</td></tr>
+<tr><td><code>UICornerstone_CreateSlider(inst, x, y, w, h, min, max, value, xScale, yScale)</code></td><td>Slider</td></tr>
+
+<tr><td><code>UICornerstone_CreateSplitter(inst, x, y, w, h, orientation, xScale, yScale)</code></td><td>Splitter</td></tr><tr><td><code>UICornerstone_CreateStatusBar(inst, x, y, w, h, xScale, yScale)</code></td><td>StatusBar（段经 StatusBarAddItem 等）</td></tr>
+<tr><td><code>UICornerstone_CreateTabControl(inst, x, y, w, h, xScale, yScale)</code></td><td>TabControl（页经 TabAddPage / TabSetPage 等）</td></tr>
+<tr><td><code>UICornerstone_CreateTextArea(inst, x, y, w, h, xScale, yScale)</code></td><td>TextArea</td></tr>
+<tr><td><code>UICornerstone_CreateTreeView(inst, x, y, w, h, xScale, yScale)</code></td><td>TreeView（节点经 <code>SetString("items", json)</code> 填充，见 7 TreeView）</td></tr>
+<tr><td><code>UICornerstone_CreateWinFrame(inst, title, x, y, w, h, xScale, yScale)</code></td><td>WinFrame</td></tr>
+<tr><td><code>UICornerstone_MenuBarAddMenu / MenuPanelAddItem / MenuPanelAddSeparator / MenuPanelRemoveItem / MenuItemSetSubMenu</code></td><td>菜单组装；<code>MenuPanelRemoveItem</code>（P0-98②）完整移除（子菜单链关闭 + id 注销 + 重算），移除后句柄失效</td></tr>
+<tr><td><code>UICornerstone_MenuBarRemoveMenu(inst, bar, caption)</code></td><td>菜单移除（1=移除 0=未找到；面板保活可再挂载）</td></tr>
+</table>
+
+<h3>8.3.1 新控件专用函数（数据 / 对象类，需句柄定位）</h3>
+
+<table>
+<tr><th>函数</th><th>作用</th></tr>
+<tr><td><code>ListViewAddRow / ListViewInsertRow / ListViewRemoveRow / ListViewSetRowCells / ListViewSetCellText / ListViewGetCellText / ListViewAddColumn / ListViewInsertColumn / ListViewRemoveColumn / ListViewSetColumnWidth / ListViewSetColumnIcon / ListViewSetRowLeadingControl / ListViewSetCellLeadingControl / ListViewSetCellStyle / ListViewSetColumnSorter / ListViewSetColumnHeaderStyle / ListViewSetColumnValues / ListViewSetCellShadow / ListViewSetColumnHeaderBackground / ListViewSetColumnHeaderShadow / ListViewSetCellTextColor / ListViewSetCellFontName / ListViewSetColumnHeaderFontName / ListViewSetCellHoverBackgroundColor</code></td><td>ListView 数据/列/样式/排序/单元格阴影/文字色/字体名/显式悬停背景/表头样式专用（P0-26/P0-56/P0-62①/P0-63②③/P0-64③）</td></tr>
+<tr><td><code>TreeViewAddNode / TreeViewRemoveNode / TreeViewClearItems / TreeViewSelectNode / TreeViewGetSelectedId / TreeViewClearSelection / TreeViewExpandNode / TreeViewCollapseNode / TreeViewExpandAll / TreeViewCollapseAll / TreeViewSetNodeLabel / TreeViewSetNodeUserData</code></td><td>TreeView 节点操作（亦可走 8.4.1 item-id 属性模式）</td></tr>
+<tr><td><code>TreeViewSetNodeTextColor / TreeViewSetNodeBackgroundColor / TreeViewSetNodeShadow / TreeViewSetNodeFont / TreeViewSetNodeHoverBackgroundColor</code></td><td>节点级着色/字体专用（P0-62②/P0-63④/P0-64④：稀疏；bg 显式 hover 态经 bgMask 豁免叠加；字体 size<=0 继承控件级）</td></tr>
+<tr><td><code>ContextMenuAddItem / ContextMenuAddSeparator / ContextMenuShow / ContextMenuClose</code> + <code>SetPtr("context-menu")</code></td><td>ContextMenu 组装与显示/绑定</td></tr>
+<tr><td><code>StatusBarAddItem / StatusBarSetItemText / StatusBarRemoveItem / StatusBarSetItemMenu / StatusBarSetItemIcon</code></td><td>StatusBar 段操作</td></tr>
+<tr><td><code>StatusBarSetItemTextColor(inst, bar, id, color, state)</code> / <code>StatusBarSetItemBackgroundColor(inst, bar, id, color)</code></td><td>StatusBar 段着色（P0-55）：文本四态（state 可 NULL=normal）、段背景单色；回退链=显式态→段 normal→控件级</td></tr>
+<tr><td><code>StatusBarSetItemFontSize(inst, bar, id, size)</code> / <code>StatusBarSetItemTextShadow(inst, bar, id, color, ox, oy)</code> / <code>StatusBarSetItemFontName(inst, bar, id, name)</code> / <code>StatusBarSetItemHoverBackgroundColor(inst, bar, id, r,g,b,a)</code></td><td>StatusBar 段级字号（0=继承控件级）/ 文字阴影 / 字体名 / 显式悬停背景（P0-58/P0-63⑤/P0-64④；未设继承控件级/叠加）</td></tr>
+<tr><td><code>TabAddPage / TabSetTitle / TabSetPage / TabSetTabLeadingControl</code></td><td>TabControl 页操作</td></tr>
+<tr><td><code>TabRemovePage(inst, tab, index)</code></td><td>页移除（1=移除 0=越界；页保活可再挂载）</td></tr>
+<tr><td><code>TabMovePage(inst, tab, from, to)</code></td><td>页序调整（P0-91；完整迁移 title/page/leadingControl，currentIndex 重映射；1=移动 0=越界/同位）</td></tr>
+<tr><td><code>TabGetItemRect(inst, tab, index, &amp;x,&amp;y,&amp;w,&amp;h)</code></td><td>页签项矩形（P0-91；<b>TabControl 局部逻辑坐标</b>；1=成功 0=越界）</td></tr>
+<tr><td><code>TreeViewMoveNode(inst, tree, id, newParentId, index)</code></td><td>节点迁移（P0-94；换序/换父，完整子树，index&lt;0=追加）</td></tr>
+<tr><td><code>ListViewMoveRow(inst, lv, from, to)</code></td><td>行换序（P0-94；from→to 最终索引）</td></tr>
+<tr><td>拖拽框架（P0-94；教程见 <a href="../advanced/drag-drop.html">5.7</a>）</td><td>属性 <code>draggable</code>/<code>droppable</code>/<code>reorderable</code>/<code>drag-threshold</code>/<code>drag-visual</code>（通用 SetBool/SetFloat；<code>reorderable</code> 自含：无需 draggable/droppable）；事件 <code>drag-start</code>/<code>drag-over</code>/<code>drop</code>/<code>drag-end</code>/<code>reordered</code>/<code>tab-reordered</code>（SetCallback）；载荷 <code>UIEventData.data.drag.{payload,hint,dropped}</code>（<code>UIDragPayload</code>/<code>UIDropHint</code>，kind 见 <code>UI_DRAG_KIND_*</code>/<code>UI_DROP_HINT_*</code>）；<code>drag-over</code> 内 <code>SetBool("drag-accept",0)</code> 拒绝；<code>drag-active</code> 只读</td></tr>
+<tr><td><code>ShapeSetPoints / ShapeMapToDrawPoint / ShapeAddPrimitive / ShapeSetPrimitiveColor / ShapeSetPrimitiveFloat / ShapeSetPrimitivePoints / ShapeClearPrimitives</code></td><td>Shape 顶点/映射/多图元</td></tr>
+</table>
+
+<h2>8.4 属性系统</h2>
+
+<p>所有属性读写均成对出现 <code>Set*/Get*</code>（除只写/回调属性），按函数名字母序：</p>
+
+<table>
+<tr><th>写（Set）</th><th>读（Get）</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_SetBool(inst, ctl, name, value)</code></td><td><code>UICornerstone_GetBool(inst, ctl, name, int&amp;)</code></td><td>布尔属性</td></tr>
+<tr><td><code>UICornerstone_SetCallback(inst, ctl, event, cb, user)</code></td><td>—</td><td>回调属性（事件注册，无 Get）；<code>cb=nullptr</code>=解绑（P0-86）</td></tr>
+<tr><td><code>UICornerstone_SetColor(inst, ctl, name, UIColor)</code></td><td><code>UICornerstone_GetColor(inst, ctl, name, UIColor&amp;)</code></td><td>颜色属性（单色）</td></tr>
+<tr><td><code>UICornerstone_SetEnum(inst, ctl, name, const char*)</code></td><td><code>UICornerstone_GetEnum(inst, ctl, name, char*, maxLen)</code></td><td>枚举属性（Get 用缓冲区，同 GetString）</td></tr>
+<tr><td><code>UICornerstone_SetFloat(inst, ctl, name, float)</code></td><td><code>UICornerstone_GetFloat(inst, ctl, name, float&amp;)</code></td><td>浮点属性</td></tr>
+<tr><td><code>UICornerstone_SetInt(inst, ctl, name, int)</code></td><td><code>UICornerstone_GetInt(inst, ctl, name, int&amp;)</code></td><td>整数属性</td></tr>
+<tr><td><code>UICornerstone_SetPtr(inst, ctl, name, void*)</code></td><td><code>UICornerstone_GetPtr(inst, ctl, name, void**)</code></td><td>指针属性</td></tr>
+<tr><td><code>UICornerstone_SetStateColor(inst, ctl, name, n, h, p, d)</code></td><td><code>UICornerstone_GetStateColor(inst, ctl, name, UIColor[4])</code></td><td>状态色（normal/hover/pressed/disabled）</td></tr>
+<tr><td><code>UICornerstone_SetString(inst, ctl, name, const char*)</code></td><td><code>UICornerstone_GetString(inst, ctl, name, char*, maxLen)</code></td><td>字符串属性（Get 用缓冲区，返回 1 成功 / 0 失败）</td></tr>
+</table>
+
+<h2 id="treeview-item">8.4.1 tree-view item 级属性（item-id 定位模式）</h2>
+
+<p>先 <code>SetString("item-id", id)</code> 定位目标节点，随后 set/get 作用于该节点（getter 对称）：</p>
+
+<pre><code>UICornerstone_SetString(inst, tree, "item-id", "img1");     // 先定位目标节点
+UICornerstone_SetFloat( inst, tree, "item-leading-gap", 10.0f);
+UICornerstone_SetInt(   inst, tree, "item-font-size", 18);
+UICornerstone_SetEnum(  inst, tree, "item-font", "maplemono-nf-cn-regular");
+UICornerstone_SetEnum(  inst, tree, "item-leading-align", "bottom-left");   // 槽位贴行底
+
+// Label 字体样式（normal/bold/italic/underline/strikethrough；raylib 不支持，静默无效果）
+UICornerstone_SetEnum(  inst, lbl, "font-style", "bold");
+// 组合：分位 Bool 开关（bold + italic = 粗斜体）
+UICornerstone_SetBool(  inst, lbl, "font-bold", 1);
+UICornerstone_SetBool(  inst, lbl, "font-italic", 1);
+UICornerstone_GetPtr(   inst, tree, "item-leading-control", &amp;lc);  // 借用手柄（生命周期由调用方保证）
+// SetPtr 可运行时挂载容器（立即挂树）；传 NULL 解除容器并摘树：
+UICornerstone_SetPtr(   inst, tree, "item-leading-control", lc);
+// 相对上一级的缩进宽度（TreeView 级，既有 CABI）：
+UICornerstone_SetFloat( inst, tree, "indent-width", 20.0f);</code></pre>
+
+<h2 id="editbox-ops">8.4.2 EditBox / TextArea 文本操作</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_EditBoxSelectAll(inst, ctl)</code></td><td>全选</td></tr>
+<tr><td><code>UICornerstone_EditBoxSetSelection(inst, ctl, start, end)</code></td><td>设置选区</td></tr>
+<tr><td><code>UICornerstone_EditBoxClearSelection(inst, ctl)</code></td><td>清除选区</td></tr>
+<tr><td><code>UICornerstone_EditBoxHasSelection(inst, ctl)</code></td><td>查询是否有选区</td></tr>
+<tr><td><code>UICornerstone_EditBoxGetCursorPosition(inst, ctl)</code></td><td>获取光标位置</td></tr>
+<tr><td><code>UICornerstone_EditBoxCopy(inst, ctl)</code></td><td>复制</td></tr>
+<tr><td><code>UICornerstone_EditBoxCut(inst, ctl)</code></td><td>剪切</td></tr>
+<tr><td><code>UICornerstone_EditBoxPaste(inst, ctl)</code></td><td>粘贴</td></tr>
+<tr><td><code>UICornerstone_EditBoxDeleteSelectedText(inst, ctl)</code></td><td>删除选中文本</td></tr>
+</table>
+
+<h2 id="combobox-ops">8.4.3 ComboBox 选项操作</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_ComboBoxAddItem(inst, ctl, label, value, disabled)</code></td><td>添加选项</td></tr>
+<tr><td><code>UICornerstone_ComboBoxRemoveItem(inst, ctl, index)</code></td><td>按索引移除选项</td></tr>
+<tr><td><code>UICornerstone_ComboBoxClearItems(inst, ctl)</code></td><td>清空选项</td></tr>
+<tr><td><code>UICornerstone_ComboBoxGetItemCount(inst, ctl)</code></td><td>获取选项数量</td></tr>
+</table>
+
+<h2 id="nud-ops">8.4.4 NumericUpDown 数值操作</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_NumericUpDownStep(inst, ctl, dir)</code></td><td>步进（dir=+1 增 / -1 减）</td></tr>
+</table>
+
+<h2 id="animation-ops">8.4.5 LuotiAni 动画操作</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_AnimationPrepare(inst, ctl, startFrame)</code></td><td>预渲染帧（两阶段 prepare）</td></tr>
+<tr><td><code>UICornerstone_AnimationSetFrameFilter(inst, ctl, bilinear)</code></td><td>帧位图采样过滤（1=双线性 / 0=最近邻）</td></tr>
+</table>
+
+<h2>8.5 控件通用操作</h2>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_GetRoot(inst)</code></td><td>取根句柄（P0-61：本实例 bench；子视口实例返回其自身 bench）——根级布局/锚定入口（配合 child-id + layout/anchor/anchor-offset-x/y）</td></tr>
+<tr><td><code>UICornerstone_AddChildControl(inst, parent, child)</code></td><td>挂载/重挂子控件（P0-50：任意旧父自动摘除，跨容器 reparent 无双挂载；非 Panel 父/自身/祖先环 → 静默 no-op）</td></tr>
+<tr><td><code>UICornerstone_RemoveChild(inst, parent, child)</code></td><td>摘除子控件（P0-50：<b>不销毁</b>，实例级保活可反复挂载；要求 child 当前父 == parent；返回 1/0）</td></tr>
+<tr><td><code>UICornerstone_DestroyControl(inst, ctl)</code></td><td>销毁控件</td></tr>
+<tr><td><code>UICornerstone_GetControlId(inst, ctl, char*, maxLen)</code></td><td>控件 id（字符串属性 <code>id</code> 的 C ABI 通道）</td></tr>
+<tr><td><code>UICornerstone_GetControlType(inst, ctl, char*, maxLen)</code></td><td>控件运行时类型名（与 JSON <code>"type"</code> 值一致，如 <code>"check-box"</code> / <code>"image"</code>；<code>"menu-item"</code> / <code>"menu-panel"</code> / <code>"handle-control"</code> 仅查询返回，实现见 design/CABI_Property_Design.md §8.2）</td></tr>
+<tr><td><code>UICornerstone_SetRect(inst, ctl, x, y, w, h)</code> / <code>GetRect(inst, ctl, float* x, *y, *w, *h)</code></td><td>位置尺寸读/写（rect 不含缩放）</td></tr>
+</table>
+
+<h2>8.6 事件与负载</h2>
+
+<pre><code>UI_EVENT_NONE / MOUSE_MOVE / MOUSE_DOWN / MOUSE_UP / MOUSE_WHEEL /
+KEY_DOWN / KEY_UP / TEXT_INPUT / WINDOW_RESIZE / WINDOW_CLOSE /
+FOCUS_GAINED / FOCUS_LOST
+
+UI_EVENT_MOUSE_X(ev) / UI_EVENT_MOUSE_Y(ev) / UI_EVENT_BUTTON(ev)
+UI_EVENT_KEY_CODE(ev) / UI_EVENT_KEY_MOD(ev) / UI_EVENT_TEXT(ev)
+UI_EVENT_WHEEL_DELTA(ev) / UI_EVENT_RESIZE_W(ev) / UI_EVENT_RESIZE_H(ev)
+
+// 回调负载（UIEventData union）
+floatVal / doubleVal / intVal / strVal / ptrVal / selection{idx,val}
+/ treeNode / color{r,g,b,a} / grid{row,col,asc}</code></pre>
+
+<p>控件事件常量（值经 <code>UICornerstone_SetCallback</code> 注册，C++ 侧定义于 <code>PropertyNames.h</code>）；负载按列取 <code>UIEventData.data</code> union 字段：</p>
+<table>
+<tr><th>事件常量</th><th>值</th><th>负载</th><th>触发方</th></tr>
+<tr><td><code>kEventClick</code></td><td>click</td><td>—</td><td>Button 等</td></tr>
+<tr><td><code>kEventValueChanged</code></td><td>value-changed</td><td>floatVal / doubleVal</td><td>Slider、NumericUpDown</td></tr>
+<tr><td><code>kEventSelectionChanged</code></td><td>selection-changed</td><td>selection{idx,val}</td><td>ComboBox</td></tr>
+<tr><td><code>kEventListSelectionChanged</code></td><td>list-selection-changed</td><td>grid{row,col}</td><td>ListView</td></tr>
+<tr><td><code>kEventItemClick</code></td><td>item-click</td><td>grid{row,col}</td><td>ListView</td></tr>
+<tr><td><code>kEventColumnSort</code></td><td>column-sort</td><td>grid{row=列,col=升序}</td><td>ListView</td></tr>
+<tr><td><code>kEventAnimationEnded</code></td><td>animation-ended</td><td>intVal（m_id）</td><td>LuotiAni</td></tr>
+<tr><td><code>kEventStatusItemClick</code></td><td>status-item-click</td><td>intVal（段索引）</td><td>StatusBar</td></tr>
+<tr><td><code>kEventTabChanged</code></td><td>tab-changed</td><td>intVal（新页索引）</td><td>TabControl</td></tr>
+</table>
+
+<h2>8.7 实例配置与后端配置</h2>
+
+<pre><code>typedef struct {
+    uint32_t    structSize;     /* sizeof(UIInstanceConfig) */
+    const char* debugLabel;     /* null → "Instance_&lt;id&gt;" */
+    const char* resourceRoot;   /* 资源根目录 */
+    const char* windowTitle;    /* null → "UICornerstone" */
+    int         windowWidth;    /* 0 → 1024 */
+    int         windowHeight;   /* 0 → 768 */
+    uint32_t    windowFlags;    /* 0x00000020 可调大小；0x00002000 高 DPI */
+    uint32_t    reserved[6];
+} UIInstanceConfig;             /* UI_INSTANCE_CONFIG_DEFAULT */
+
+UICornerstone_SetBackendConfig(inst, key, value)      /* inst=NULL 为全局默认 */
+UICornerstone_SetBackendConfigInt / SetBackendConfigBool / GetBackendConfigInt / GetBackendConfigBool
+UICornerstone_GetBackendConfig(inst, key, char*, len) /* 只读查询 */</code></pre>
+
+<h2>8.8 内存资源（MemoryResourceProvider）</h2>
+
+<p>注册内存资源后，以 <code>provider:name</code> 前缀在工厂 / 布局 / 属性（<code>font-file</code> 等）中引用，引擎不再访问磁盘；未命中注册名时回退文件系统查找。详细设计见 <code>design/ResourceProvider_Design.md</code>。</p>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>int memoryProviderAdopt(provider, name, data, len, freeFn)</code></td><td>零拷贝注册：引擎仅引用 data，覆盖/销毁时经 freeFn 释放（null → 默认 free）</td></tr>
+<tr><td><code>int memoryProviderRegister(provider, name, data, len)</code></td><td>拷贝注册：引擎复制字节，调用方可立即释放</td></tr>
+<tr><td><code>int setResourceProvider(inst, role, provider)</code></td><td>挂载到实例（角色 <code>"resourceProviders"</code>）；同名 provider 覆盖旧条目并先释放</td></tr>
+<tr><td><code>UIMemoryResourceProvider* createMemoryResourceProvider(alloc, freeFn, user)</code></td><td>创建内存 provider（alloc/freeFn 可 null → 默认 malloc/free）</td></tr>
+</table>
+
+<pre><code>/* 直连 C ABI 用法 */
+UIMemoryResourceProvider* rp = createMemoryResourceProvider(NULL, NULL, NULL);
+memoryProviderAdopt(rp, "cross-down", pngData, pngLen, NULL);   /* 零拷贝引用 */
+setResourceProvider(inst, "resourceProviders", rp);
+UICornerstone_CreateImage(inst, "provider:cross-up", 20, 70, 0, 0);</code></pre>
+
+<div class="note">adopt 契约：调用方须保持缓冲有效直至实例销毁；C++ Binding 的 <code>RegisterResource</code> / <code>AdoptResource</code> 封装了懒创建 + 自动挂载（见 11.3）。</div>
+
+<h2>8.9 调试工具（Debug_*）</h2>
+
+<p>调试/巡检辅助，均不改写业务状态：</p>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_Debug_GetAliveCount()</code></td><td>存活实例数（静态）</td></tr>
+<tr><td><code>UICornerstone_Debug_GetAliveInstance(index) / Debug_GetActiveViewport(instance)</code></td><td>实例巡检 / 活动视口（静态）</td></tr>
+<tr><td><code>UICornerstone_Debug_IsControlFocused(inst, ctl)</code></td><td>焦点查询</td></tr>
+<tr><td><code>UICornerstone_Debug_IsControlHovered(inst, ctl)</code></td><td>hover 查询</td></tr>
+<tr><td><code>UICornerstone_Debug_RouteMouseTarget(inst, x, y)</code></td><td>鼠标目标解析探针（P0-52②）：返回 1=owner（浮层优先/空白区）/ 0=子视口（测试用）</td></tr>
+<tr><td><code>UICornerstone_Debug_ValidateHandle(inst, ctl)</code></td><td>句柄归属校验（P0-84c，Release 可用）：1=属于本实例，0=不属于/非法——构建期自检防跨实例句柄误用</td></tr>
+<tr><td><code>UICornerstone_Debug_SetMousePosition(inst, x, y) / Debug_ClearMousePosition(inst)</code></td><td>鼠标位置调试写入 / 清除（测试用）</td></tr>
+</table>
+
+<h2>8.10 截图（Capture_*，测试辅助）</h2>
+
+<p>帧内读回截图像素（正式 API，由后端 READBACK 能力位门控；配合自动化测试的像素级断言与截图落盘）。</p>
+
+<table>
+<tr><th>函数</th><th>说明</th></tr>
+<tr><td><code>UICornerstone_CaptureRect(inst, x, y, w, h, out, &amp;outW, &amp;outH)</code></td><td>原语：截取屏幕坐标系 rect，返回 RGBA8888 像素；部分越界裁剪，与视口交集为空 / out 为空 / w·h≤0 → 0</td></tr>
+<tr><td><code>UICornerstone_CaptureViewport(inst, out, &amp;outW, &amp;outH)</code></td><td>整视口截图（宽度 == 窗口宽度）</td></tr>
+<tr><td><code>UICornerstone_CaptureBench(inst, out, &amp;outW, &amp;outH)</code></td><td>画布区截图（画布顶层 getDrawRect 范围）</td></tr>
+<tr><td><code>UICornerstone_CaptureControl(inst, ctl, out, &amp;outW, &amp;outH)</code></td><td>控件包围盒截图（getDrawRect 范围）</td></tr>
+<tr><td><code>UICornerstone_SavePixelsToFile(pixels, w, h, path)</code></td><td>RGBA8888 像素落盘 BMP（32 位 BGRA，bottom-up）</td></tr>
+<tr><td><code>UICornerstone_GetFontCount(void)</code> / <code>UICornerstone_GetFontName(index, out, maxLen)</code></td><td>字体枚举清单（静态，6 项；与 <code>kFont*</code> 常量 / schema <code>font-name</code> 单一数据源；返回值可直接用于 <code>SetString/SetEnum("font")</code>）</td></tr>
+</table>
+
+<div class="note">调用契约：Render 之后、Present 之前调用（帧内读回）；out 由调用方分配 w*h*4 字节；像素为 R,G,B,A 字节序、top-down 行序；坐标零换算（viewport 已含 anchor/scale）。默认布局下 bench 根容器背景覆盖视口背景色，截图像素以根容器/控件为准。</div>
+
+<div class="chapter-nav">
+  <a href="properties.html">← 7 属性速查表</a>
+  <a href="debugging.html">下一节：9 问题定位手段 →</a>
+</div>
+
+</div>
+
+</div>
+</body>
+</html>

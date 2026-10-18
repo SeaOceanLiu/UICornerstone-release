@@ -1,0 +1,290 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.4 声明式 UI - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="css/style.css">
+<script id="nav-data" src="assets/nav.js" data-prefix="" data-current="declarative-ui.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>3.4 声明式 UI</h1>
+
+<p>声明式 UI 是 UICornerstone 的核心工作流：用 JSON 描述控件树、布局、事件与主题，运行时由 <code>LayoutParser</code> 解析构建控件树。界面结构一目了然、可热重载、可被外部工具生成。</p>
+
+<h2>3.4.1 声明式 UI 介绍</h2>
+
+<p>一个布局文件描述整个界面：</p>
+
+<pre><code>{
+  "version": "1.0",
+  "viewport": { "width": 800, "height": 480 },
+  "theme": {
+    "fonts": { "default": { "name": "HarmonyOS_Sans_SC_Regular", "size": 16 } },
+    "colors": { "background": "#282828FF", "text": "#FFFFFFFF" }
+  },
+  "controls": [
+    {
+      "type": "button", "id": "submitBtn",
+      "rect": { "x": 280, "y": 140, "w": 100, "h": 35 },
+      "caption": "Submit",
+      "events": { "onClick": "handleSubmit" }
+    }
+  ]
+}</code></pre>
+
+<h3>通用节点键</h3>
+
+<table>
+<tr><th>键</th><th>说明</th></tr>
+<tr><td><code>children</code></td><td>子控件数组（容器类型）</td></tr>
+<tr><td><code>colors</code></td><td>状态色对象：<code>{"background":{"normal","hover","pressed","disabled"}}</code>，含 text / border / text-shadow / 控件特有键</td></tr>
+<tr><td><code>events</code></td><td><code>{"onClick":"handlerName"}</code> 引用已注册处理器</td></tr>
+<tr><td><code>id</code></td><td>全局唯一标识，供 <code>FindControl</code> / <code>findControlById</code> 查找</td></tr>
+<tr><td><code>margin</code></td><td><code>{"left","top","right","bottom"}</code></td></tr>
+<tr><td><code>rect</code></td><td><code>{"x","y","w","h"}</code>；支持百分比字符串（<code>"50%"</code>）</td></tr>
+<tr><td><code>scale</code></td><td><code>{"x":1.0,"y":1.0}</code> 本地缩放</td></tr>
+<tr><td><code>type</code></td><td>控件类型（kebab 小写）：<code>label</code> / <code>button</code> / <code>image</code> / <code>animation</code> / <code>edit-box</code> / <code>check-box</code> / <code>combo-box</code> / <code>context-menu</code>（控件级 context-menu 键）/ <code>list-view</code> / <code>numeric-up-down</code> / <code>progress-bar</code> / <code>scroll-bar</code> / <code>shape</code> / <code>status-bar</code> / <code>tab-control</code> / <code>color-picker</code> / <code>text-area</code> / <code>panel</code> / <code>menu-bar</code> / <code>win-frame</code> / <code>splitter</code> / <code>tree-view</code></td></tr>
+<tr><td><code>visible</code> / <code>enabled</code></td><td>可见 / 启用</td></tr>
+</table>
+
+<p>颜色格式：<code>"#RGB"</code> / <code>"#RRGGBB"</code> / <code>"#RRGGBBAA"</code>，或 <code>{"r":255,"g":0,"b":0,"a":128}</code>。</p>
+
+<h3>加载与事件绑定</h3>
+
+<pre><code>// C ABI
+UICornerstone_RegisterAction(g_inst, "handleSubmit",
+    [](UIControlHandle ctl, void* user){ /* ... */ }, NULL);
+UICornerstone_LoadLayout(g_inst, LAYOUT_JSON);   // 或 LoadLayoutFromFile
+
+// C++ Binding
+ui->RegisterAction("handleSubmit", [](Control ctl){ /* ... */ });
+ui->LoadLayout(layoutJson);</code></pre>
+
+<div class="tip">未注册的 handler 名会被静默跳过，便于同一布局文件在不同工程中复用。</div>
+
+<h2>3.4.2 声明式 UI 的布局</h2>
+
+<p>布局由面板的 <code>layout</code> 键启用，四种引擎：</p>
+
+<h3>流式（h-flow / v-flow）</h3>
+
+<pre><code>"layout": { "type": "h-flow", "gap": 4,
+             "padding": { "left": 4, "top": 4, "right": 4, "bottom": 4 } }</code></pre>
+
+<p>子控件以 <code>flow-weight</code> 弹性分配剩余空间（&gt;0 弹性，0/缺省为固定尺寸）。</p>
+
+<pre><code>{
+  "type": "panel", "id": "formPanel",
+  "rect": { "x": 50, "y": 112, "w": 400, "h": 200 },
+  "layout": { "type": "v-flow", "gap": 8 },
+  "children": [
+    { "type": "edit-box",  "id": "nameEdit", "flow-weight": 1, "rect": { "w": 0, "h": 30 } },
+    { "type": "button",    "id": "submitBtn","rect": { "w": 100, "h": 35 } }
+  ]
+}</code></pre>
+
+<h3>锚点（anchor）</h3>
+
+<pre><code>"layout": { "type": "anchor" }
+// 子控件：
+{ "type": "button", "id": "okBtn",
+  "rect": { "w": 100, "h": 32 },
+  "anchor": "top-right",
+  "anchorOffset": { "left": 10, "top": 10, "right": 0, "bottom": 0 } }</code></pre>
+
+<p>锚点值：<code>top-left / top-center / top-right / mid-left / center / mid-right / bottom-left / bottom-center / bottom-right / top-stretch / bottom-stretch / left-stretch / right-stretch / fill</code>。</p>
+
+<h3>anchor 取值含义</h3>
+<table>
+<tr><th>取值（小写连字符）</th><th>含义</th></tr>
+<tr><td><code>top-left</code> / <code>top-center</code> / <code>top-right</code></td><td>靠顶部：左/中/右对齐（<code>top-left/top-right</code> 用 <code>offset.left+top</code> / <code>offset.right+top</code> 定距）</td></tr>
+<tr><td><code>mid-left</code> / <code>center</code> / <code>mid-right</code></td><td>垂直居中：左/中/右对齐（<code>center</code> 居中后 <code>offset.left+top</code> 额外位移）</td></tr>
+<tr><td><code>bottom-left</code> / <code>bottom-center</code> / <code>bottom-right</code></td><td>靠底部：左/中/右对齐（<code>offset.bottom</code> 定底距）</td></tr>
+<tr><td><code>top-stretch</code></td><td>顶部拉伸：宽度填满容器（扣 <code>offset.left+right</code>），顶部固定</td></tr>
+<tr><td><code>bottom-stretch</code></td><td>底部拉伸：宽度填满容器，底部固定</td></tr>
+<tr><td><code>left-stretch</code></td><td>左侧拉伸：高度填满容器（扣 <code>offset.top+bottom</code>），左侧固定</td></tr>
+<tr><td><code>right-stretch</code></td><td>右侧拉伸：高度填满容器，右侧固定</td></tr>
+<tr><td><code>fill</code></td><td>填满容器内边距区域（宽高均填满，扣四边 <code>offset</code> 与布局 <code>padding</code>）</td></tr>
+</table>
+
+<h3>网格（grid）</h3>
+
+<pre><code>"layout": {
+  "type": "grid",
+  "columns": ["1fr", "2fr", "100px"],
+  "rows": ["30px", "1fr", "auto"]
+}
+// 子控件：
+{ "type": "button", "id": "cellBtn",
+  "grid": { "row": 0, "col": 1, "rowSpan": 1, "colSpan": 1 } }</code></pre>
+
+<p>行列尺寸支持 <code>Fixed（"100px"）</code> / <code>Flex（"1fr"）</code> / <code>Auto（"auto"）</code> 三种。</p>
+
+<div class="note">重排时机：<code>Panel::setRect()</code> 与窗口 resize 自动触发 <code>reflowChildren()</code>；<code>visible==false</code> 的子控件被跳过。</div>
+
+<h2>3.4.3 声明式 UI 的组件逻辑</h2>
+
+<p>通过 <code>components</code> 定义可复用组件模板，在 <code>layouts</code> 中实例化：</p>
+
+<pre><code>{
+  "components": {
+    "SearchBar": {
+      "props": { "placeholder": "Search...", "btnText": "Go" },
+      "template": {
+        "type": "panel", "layout": { "type": "h-flow", "gap": 4 },
+        "children": [
+          { "type": "edit-box", "id": "$search", "rect": { "w": 200, "h": 30 },
+            "placeholder": "$props.placeholder" },
+          { "type": "button", "id": "$go", "rect": { "w": 60, "h": 30 },
+            "caption": "$props.btnText", "events": { "onClick": "onSearch" } }
+        ]
+      }
+    }
+  },
+  "layouts": [
+    { "use": "SearchBar", "id": "topSearch",
+      "props": { "placeholder": "输入关键词", "btnText": "搜索" },
+      "rect": { "x": 20, "y": 20, "w": 300, "h": 40 } }
+  ]
+}</code></pre>
+
+<div class="note">组件系统会将组件中的控件（<code>$id</code> 形式）实例化到 <code>layouts</code> 数组指定的布局中；事件处理器同样经 <code>RegisterAction</code> 注册。</div>
+
+<p>组件实例支持<strong>数据绑定</strong>：<code>layouts</code> 条目上的 <code>bind</code> 对象把控件属性绑定到数据源键（默认单向 <code>oneway</code>；<code>twoway</code> 双向回写）：</p>
+<pre><code>{ "use": "SearchBar", "id": "topSearch",
+  "bind": {
+    "text": "user.keyword",                                  // 简写：字符串=源键（oneway）
+    "caption": { "source": "user.title", "mode": "twoway" }  // 对象：source + mode（oneway|twoway）
+  } }</code></pre>
+
+<h2>3.4.4 声明式 UI 的事件回调</h2>
+
+<table>
+<tr><th>控件</th><th>JSON 事件键</th></tr>
+<tr><td>CheckBox</td><td><code>onCheckChanged</code></td></tr>
+<tr><td>Button / Label / MenuItem</td><td><code>onClick</code></td></tr>
+<tr><td>WinFrame / Dialog</td><td><code>onClose</code>、<code>onConfirm</code>、<code>onCancel</code></td></tr>
+<tr><td>ColorPicker</td><td><code>onColorChanged</code></td></tr>
+<tr><td>ScrollBar</td><td><code>onPositionChanged</code></td></tr>
+<tr><td>ComboBox</td><td><code>onSelectionChanged</code></td></tr>
+<tr><td>Splitter</td><td><code>onSplitterMoved</code></td></tr>
+<tr><td>EditBox / TextArea</td><td><code>onTextChanged</code>、<code>onEnter</code></td></tr>
+<tr><td>ProgressBar</td><td><code>onValueChanged</code></td></tr>
+<tr><td>Slider / NumericUpDown</td><td><code>onValueChanged</code></td></tr>
+</table>
+
+<pre><code>// C++（直接 API 的 LayoutParser）
+parser.registerHandler("onSearch", [](shared_ptr<Control> ctl){
+    auto edit = ctl->findControlById("topSearch_search");
+    printf("search: %s\n", edit->getStringProperty("text").c_str());
+});
+parser.parseLayoutFile("layouts/main.json");</code></pre>
+
+<h2>3.4.5 主题样式</h2>
+
+<p>顶层 <code>theme</code> 键提供全局默认样式，控件节点上的显式键优先。应用顺序：主题默认 → 公共 colors → 控件专用颜色 → 控件专用字体。</p>
+
+<pre><code>"theme": {
+  "colors": {
+    "background": "#282828FF",
+    "text": "#FFFFFFFF",
+    "border": "#808080FF",
+    "button": {
+      "bg":    { "normal": "#3C3C3CFF", "hover": "#4C4C4CFF", "pressed": "#2C2C2CFF" },
+      "border":{ "normal": "#505050FF" },
+      "text":  { "normal": "#FFFFFFFF" }
+    },
+    "checkbox": { "check": "#66BB6AFF", "cross": "#FF5722FF", "indeterminate": "#FFC107FF", "boxBorder": "#53535AFF" },
+    "progressbar": { "progress": "#66BB6AFF", "track": "#333333FF" }
+  },
+  "fonts": {
+    "default": { "name": "HarmonyOS_Sans_SC_Regular", "size": 16 },
+    "button":  { "size": 16 }
+  }
+}</code></pre>
+
+<p>支持类别（category）：<code>button / label / editbox / textarea / checkbox / progressbar / panel / scrollbar / menubar / colorpicker / numericupdown / splitter / treeview / popup / confirmpopup / dialog</code>；字体未定义时回退 <code>default</code>，再回退内置默认（HarmonyOS Sans SC Regular 16）。公共颜色路径为 <code>colors.&lt;类别&gt;.bg / .border / .text / .textShadow</code>（状态对象 <code>{normal,hover,pressed,disabled}</code> 子集）；CheckBox 专有色键为 <code>colors.checkbox.check</code> / <code>colors.checkbox.cross</code> / <code>colors.checkbox.indeterminate</code> / <code>colors.checkbox.boxBorder</code>，ProgressBar 为 <code>colors.progressbar.progress</code> / <code>colors.progressbar.track</code>。</p>
+
+<h2>3.4.6 热加载</h2>
+
+<p><code>HotReloader</code> 监视布局文件，改动即热重载，无需重启程序：</p>
+
+<pre><code>// 文件变化 → 完全重建控件树（Handler 保留）
+HotReloader reloader("layouts/main.json", [](){
+    // 重建逻辑：removeAllControls → parseLayoutFile → addControl
+});
+reloader.poll();      // 每帧调用，默认 30 帧检查一次（≈0.5s）
+reloader.reload();    // 或手动触发
+reloader.setPollInterval(15);   // 调整检查间隔（帧数）</code></pre>
+
+<div class="note">热重载会重建整棵控件树：控件状态（选中、输入内容）不保留；仅支持单文件轮询监视。适合开发期调整布局/样式。</div>
+
+<h2>3.4.7 资源提供者（ResourceProviders）</h2>
+
+<p>支持在初始化前把资源读入内存注册（<code>MemoryResourceProvider</code>），或经布局顶层 <code>resourceProviders</code> 键把磁盘路径挂载为资源名（懒加载 + 缓存；顶层主实例同样生效，未注册/未挂载键按 <code>resourceRoot</code> 文件系统回退——P0-78）。<code>path</code> 可为文件（精确键 <code>provider:name</code>）或目录（经 <code>provider:name/相对路径</code> 引用，最长挂载名匹配；<code>..</code> 与盘符子路径被拒绝）。挂载后控件引用一律使用 <code>provider:</code> 前缀，引擎在 <code>loadFromFile</code> 入口自动分流，绝不触碰磁盘（挂载点在 <code>controls</code> 之前）：</p>
+
+<pre><code>{
+  "version": "1.0",
+  "resourceProviders": [
+    { "name": "up-image", "path": "images/cross_up.png" },
+    { "name": "bomb-ani", "path": "animations/bombBlock/bombBlock.jsonc" }
+  ],
+  "controls": [ ... ]
+}</code></pre>
+
+<p>引用语法（与 C ABI 属性 / 工厂等价）：</p>
+
+<pre><code>// ① 四态图按钮（P0-31：image-button 已移除，button + actors）：actors 对象式或字符串式
+{ "type": "button",
+  "actors": {
+    "normal":  { "providerName": "up-image" },
+    "hover":   "provider:cross-down",
+    "pressed": { "providerName": "up-image" }
+  } }
+
+// ② 动画描述 path
+{ "type": "animation", "path": "provider:bomb-ani" }
+
+// ③ 独立图片节点（Actor）：image 键（文件路径）或 image-resource / providerName（内存资源 ID）
+{ "type": "image", "id": "hero", "rect": { "x": 20, "y": 20, "w": 128, "h": 128 },
+  "image": "assets/images/cross_up.png", "scale-type": "fit-center" }
+{ "type": "image", "rect": { "x": 160, "y": 20, "w": 64, "h": 64 },
+  "providerName": "cross-down", "match-parent-rect": false }</code></pre>
+ <p><strong>通用字体键（v1.1.1）</strong>：任意控件均可在其 JSON 上声明 <code>font</code>（对象 <code>{name, size}</code>）或便捷键 <code>font-size</code>：
+ 未声明时沿<b>父控件链继承</b>最近一次显式字体（含字号），父控件自身未声明时沿用主题默认。示例：Panel 上 <code>font:{size:20}</code> → 其内 Label/EditBox/TreeView/ListView 等无字体声明的子控件自动 20；子级 <code>font:{size:24}</code> 覆盖。字串形式（<code>font-name</code> 枚举）用于部分控件的 <code>name</code> 子键。</p>
+  <p>继承细节：仅当祖先<b>显式声明 <code>font.name</code></b> 时才会把字体名传给子控件；父只声明 <code>font-size</code>（未声明 name）时，子控件保留自身默认字体名（如 ListView 默认 <code>HarmonyOS_Sans_SC_Regular</code>）。</p>
+
+<table>
+<tr><th>控件</th><th>继承方式</th></tr>
+<tr><td>Label / EditBox / ComboBox / TextArea / ProgressBar / TreeView / TabControl / StatusBar / MenuBar / ListView</td><td>直接承接（<code>ApplyFontToControl</code> 直连 <code>setFontSize/setFont</code>）</td></tr>
+<tr><td>Button / CheckBox / WinFrame / ColorPicker / Dialog（含确认按钮）</td><td>内部 Label 子控件经父链透传继承（文字载体为内部 Label）</td></tr>
+<tr><td>Slider 数值标签</td><td>专用 <code>label-font</code> 键（<code>kLabelFont</code>），独立于通用继承——数值标签字号可单独调</td></tr>
+<tr><td>Panel / ScrollBar / Splitter / Shape / Image / Actor / LuotiAni / HandleControl / ContextMenu</td><td>无文字渲染，不涉及</td></tr>
+</table>
+
+
+<p>Label 字体三形态（<code>font</code> 枚举、<code>font-resource</code> 内存资源、<code>font-file</code> 任意路径）与字符串属性互斥覆盖，均可带 <code>provider:</code> 前缀：</p>
+
+<pre><code>{ "type": "label", "caption": "Hello",
+  "font-resource": "maple-font", "font-size": 20 }        // 内存注册的字体 ID
+{ "type": "label", "caption": "Hello",
+  "font-file": "fonts/MyCustom.ttf" }                    // 任意字体文件（相对 resourceRoot）
+{ "type": "label", "caption": "Hello",
+  "font-file": "provider:maple-font" }                   // 文件形态走内存注册</code></pre>
+
+<div class="note">内存 provider 模式下引擎不读磁盘：<code>resourceRoot</code> 指向不存在目录也可运行，全部资源（含动画 JSON 内层图片 <code>src</code> 原串，如 <code>animations/bombBlock/marker.svg</code>）须按原串注册进 provider。<code>provider:</code> 是保留前缀，请勿用作真实文件名。</div>
+
+<div class="chapter-nav">
+  <a href="property-system.html">← 3.3 属性系统</a>
+  <a href="events-focus.html">下一章：3.5 事件 →</a>
+</div>
+
+</div>
+</body>
+</html>

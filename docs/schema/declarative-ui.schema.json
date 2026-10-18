@@ -1,0 +1,2443 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uicornerstone.dev/schema/declarative-ui.schema.json",
+  "title": "UICornerstone Declarative UI",
+  "description": "声明式 UI 布局语法限定表。扩展约定：x-default=默认值（生成器/补全用）、x-required=语义必选说明、x-color=颜色类型（#RRGGBB[AA] 或 {r,g,b,a}）。动态机制（components/template/bind 与 {{}} 占位符值）由校验器跳过放行。键序约定：$defs 与各 def 的 properties 按字母序排列；习惯性顺序保留（rect 的 x/y/w/h、margin 的 left/top/right/bottom、range 的 min/max 等）。",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/layout-root"
+    }
+  ],
+  "$defs": {
+    "shadow": {
+      "type": "object",
+      "description": "阴影 {enabled, offset:{x,y}}",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "offset": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "x-default": "1"
+            },
+            "y": {
+              "type": "number",
+              "x-default": "1"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "align9": {
+      "enum": [
+        "top-left",
+        "mid-left",
+        "bottom-left",
+        "top-right",
+        "mid-right",
+        "bottom-right",
+        "top-center",
+        "center",
+        "bottom-center"
+      ]
+    },
+    "animation": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "animation"
+        },
+        "path": {
+          "type": "string",
+          "description": "JSONC 动画描述路径"
+        },
+        "playing": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "button": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "button"
+        },
+        "actors": {
+          "type": "object",
+          "description": "状态图 {normal/hover/pressed/disabled: path|{file,...}}，宽松校验"
+        },
+        "caption": {
+          "type": "string",
+          "x-default": "",
+          "description": "文本内容（对齐运行时属性名 caption）"
+        },
+        "caption-label": {
+          "type": "object",
+          "description": "自定义标题 Label 描述"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "file": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "image-resource": {
+          "type": "string"
+        },
+        "normal-image": {
+          "type": "string",
+          "description": "运行时状态图（文件路径或 provider: 资源引用）；等价 actors.normal；与属性键同名（P0-19）"
+        },
+        "hover-image": {
+          "type": "string",
+          "description": "运行时状态图（文件路径或 provider: 资源引用）；等价 actors.hover"
+        },
+        "pressed-image": {
+          "type": "string",
+          "description": "运行时状态图（文件路径或 provider: 资源引用）；等价 actors.pressed"
+        },
+        "disabled-image": {
+          "type": "string",
+          "description": "运行时状态图（文件路径或 provider: 资源引用）；等价 actors.disabled"
+        },
+        "animation": {
+          "type": "string",
+          "description": "运行时内嵌动画（jsonc 文件路径或 provider: 资源引用）；等价 luotiAni.file"
+        },
+        "luotiAni": {
+          "type": "object",
+          "description": "内嵌动画描述（宽松校验）"
+        },
+        "match-parent-rect": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "name": {
+          "type": "string"
+        },
+        "playing": {
+          "type": "boolean",
+          "description": "内嵌动画挂树即播"
+        },
+        "providerName": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "scale-type": {
+          "enum": [
+            "stretch",
+            "fit-center",
+            "center-crop",
+            "none",
+            "tile"
+          ]
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "check-box": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "type": {
+          "const": "check-box"
+        },
+        "box-border-color": {
+          "$ref": "#/$defs/color"
+        },
+        "caption": {
+          "type": "string",
+          "x-default": ""
+        },
+        "check-color": {
+          "$ref": "#/$defs/color"
+        },
+        "check-state": {
+          "enum": [
+            "unchecked",
+            "checked",
+            "indeterminate"
+          ],
+          "x-default": "unchecked"
+        },
+        "cross-color": {
+          "$ref": "#/$defs/color"
+        },
+        "indeterminate-color": {
+          "$ref": "#/$defs/color"
+        },
+        "layout": {
+          "enum": [
+            "text-right",
+            "text-left"
+          ],
+          "x-default": "text-right"
+        },
+        "size-ratio": {
+          "type": "number",
+          "x-default": "1.0"
+        },
+        "style": {
+          "enum": [
+            "classic",
+            "cross",
+            "circle"
+          ],
+          "x-default": "classic"
+        },
+        "tri-state": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "vertical-align": {
+          "enum": [
+            "center",
+            "top",
+            "bottom"
+          ],
+          "x-default": "center"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "color": {
+      "x-color": true,
+      "description": "#RRGGBB[AA] 字符串 或 {r,g,b,a} 整数对象"
+    },
+    "color-picker": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "color-picker"
+        },
+        "closed-font-size": {
+          "type": "integer",
+          "x-default": "12"
+        },
+        "closed-text-color": {
+          "$ref": "#/$defs/color"
+        },
+        "color": {
+          "type": "string",
+          "description": "初始颜色 hex"
+        },
+        "popup-bg": {
+          "$ref": "#/$defs/color"
+        },
+        "presetLayout": {
+          "type": "object",
+          "description": "{cols,rows} 色板网格"
+        },
+        "presets": {
+          "type": "array",
+          "description": "预设色板（hex 数组）"
+        },
+        "closed-swatch-size": {
+          "type": "number",
+          "x-default": "16"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "combo-box": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "combo-box"
+        },
+        "alignment": {
+          "$ref": "#/$defs/align9"
+        },
+        "arrow-width": {
+          "type": "number",
+          "x-default": "20"
+        },
+        "cycle-enabled": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "editable": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "item-height": {
+          "type": "number",
+          "x-default": "24"
+        },
+        "items": {
+          "type": "array",
+          "description": "选项数组 [{label,value,disabled}]",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "disabled": {
+                "type": "boolean",
+                "x-default": "false"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "max-visible-items": {
+          "type": "integer",
+          "x-default": "6"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "selected-index": {
+          "type": "integer",
+          "x-default": "-1"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "text": {
+          "type": "string"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-input"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "common": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-default": ""
+        },
+        "flow-weight": {
+          "type": "number",
+          "x-default": "1.0"
+        },
+        "enabled": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "context-menu": {
+          "type": "object",
+          "description": "控件级右键菜单（ContextMenu）：{items:[{caption,shortcut,type,icon…}]}（元素宽松校验）"
+        },
+        "events": {
+          "type": "object",
+          "description": "事件绑定：onXxx → 动作名（action 注册名，语义层不校验）"
+        },
+        "margin": {
+          "$ref": "#/$defs/margin"
+        },
+        "anchor": {
+          "type": "string",
+          "enum": [
+            "top-left", "top-center", "top-right",
+            "mid-left", "center", "mid-right",
+            "bottom-left", "bottom-center", "bottom-right",
+            "top-stretch", "bottom-stretch", "left-stretch", "right-stretch",
+            "fill"
+          ],
+          "description": "子控件锚点（P0-59：父容器 layout.type=anchor 时生效；运行期经 child-id + anchor 读写）"
+        },
+        "anchorOffset": {
+          "$ref": "#/$defs/margin"
+        },
+        "rect": {
+          "$ref": "#/$defs/rect"
+        },
+        "scale": {
+          "$ref": "#/$defs/scale"
+        },
+        "visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "draggable": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "P0-94：可拖拽源（true 时引擎自动填充载荷；tree/list/tab 自动元素载荷）"
+        },
+        "droppable": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "P0-94：可放置目标（drag-over/drop 事件）"
+        },
+        "drag-threshold": {
+          "type": "number",
+          "x-default": "4",
+          "description": "P0-94：拖动阈值（px）"
+        },
+        "drag-visual": {
+          "type": "boolean",
+          "x-default": "true",
+          "description": "P0-94：默认视觉开关（ghost/落点指示）"
+        }
+      }
+    },
+    "control-any": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/animation"
+        },
+        {
+          "$ref": "#/$defs/button"
+        },
+        {
+          "$ref": "#/$defs/check-box"
+        },
+        {
+          "$ref": "#/$defs/color-picker"
+        },
+        {
+          "$ref": "#/$defs/combo-box"
+        },
+        {
+          "$ref": "#/$defs/context-menu"
+        },
+        {
+          "$ref": "#/$defs/dialog"
+        },
+        {
+          "$ref": "#/$defs/edit-box"
+        },
+        {
+          "$ref": "#/$defs/image"
+        },
+        {
+          "$ref": "#/$defs/label"
+        },
+        {
+          "$ref": "#/$defs/list-view"
+        },
+        {
+          "$ref": "#/$defs/menu-bar"
+        },
+        {
+          "$ref": "#/$defs/numeric-up-down"
+        },
+        {
+          "$ref": "#/$defs/panel"
+        },
+        {
+          "$ref": "#/$defs/popup"
+        },
+        {
+          "$ref": "#/$defs/progress-bar"
+        },
+        {
+          "$ref": "#/$defs/scroll-bar"
+        },
+        {
+          "$ref": "#/$defs/shape"
+        },
+        {
+          "$ref": "#/$defs/splitter"
+        },
+        {
+          "$ref": "#/$defs/status-bar"
+        },
+        {
+          "$ref": "#/$defs/tab-control"
+        },
+        {
+          "$ref": "#/$defs/text-area"
+        },
+        {
+          "$ref": "#/$defs/tree-view"
+        },
+        {
+          "$ref": "#/$defs/win-frame"
+        }
+      ]
+    },
+    "dialog": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "dialog"
+        },
+        "button-gap": {
+          "type": "number",
+          "x-default": "8"
+        },
+        "button-height": {
+          "type": "number",
+          "x-default": "28"
+        },
+        "cancel-button": {
+          "type": "object"
+        },
+        "centered": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "close-on-click-outside": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "close-on-esc": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "confirm-button": {
+          "type": "object"
+        },
+        "padding": {
+          "type": "number",
+          "x-default": "10"
+        },
+        "text": {
+          "type": "string"
+        },
+        "visible": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-basic2"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "edit-box": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "edit-box"
+        },
+        "alignment": {
+          "$ref": "#/$defs/align9",
+          "x-default": "mid-left"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "password-char": {
+          "type": "integer",
+          "description": "掩码字符 ASCII 码"
+        },
+        "password-mode": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "read-only": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "只读（P0-83）：禁编辑/插入，保留选择/复制/滚动/光标/焦点"
+        },
+        "placeholder": {
+          "type": "string",
+          "x-default": ""
+        },
+        "size": {
+          "type": "integer",
+          "x-default": "16"
+        },
+        "text": {
+          "type": "string",
+          "x-default": ""
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-input"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "font-name": {
+      "enum": [
+        "asul-bold",
+        "harmonyos-sans-sc-regular",
+        "harmonyos-sans-sc-thin",
+        "maplemono-nf-cn-regular",
+        "muyao-softbrush",
+        "quando-regular"
+      ]
+    },
+    "font-spec": {
+      "type": "object",
+      "description": "字体声明 {name, size, style}；未声明时沿父控件链继承最近显式字体（v1.1.1）",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/font-name"
+        },
+        "size": {
+          "type": "integer",
+          "x-default": "14"
+        },
+        "style": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "组合位 OR：bold/italic/underline/strikethrough（parseFontStyle 语义）"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "image": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "image"
+        },
+        "alpha": {
+          "type": "integer",
+          "x-default": "255"
+        },
+        "image": {
+          "type": "string",
+          "description": "图片文件路径"
+        },
+        "image-resource": {
+          "type": "string",
+          "description": "内存图片资源 ID"
+        },
+        "match-parent-rect": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "providerName": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "scale-type": {
+          "enum": [
+            "stretch",
+            "fit-center",
+            "center-crop",
+            "none",
+            "tile"
+          ]
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "list-view": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "list-view"
+        },
+        "columns": {
+          "type": "array",
+          "description": "列定义 [{title,width,sortable,header-*}]（icon 一期暂缓；header-* 与控件级同名同义，作用域=该列）",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string",
+                "description": "列头图标（资源引用 provider:…）"
+              },
+              "title": {
+                "type": "string"
+              },
+              "width": {
+                "type": "number",
+                "x-default": "100"
+              },
+              "sortable": {
+                "type": "boolean",
+                "x-default": "false"
+              },
+              "header-text": {
+                "$ref": "#/$defs/color"
+              },
+              "header-background": {
+                "$ref": "#/$defs/color"
+              },
+              "header-shadow": {
+                "$ref": "#/$defs/color"
+              },
+              "header-shadow-offset-x": {
+                "type": "number",
+                "x-default": "1"
+              },
+              "header-shadow-offset-y": {
+                "type": "number",
+                "x-default": "1"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "cycle-navigation": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "gridlines": {
+          "type": "boolean",
+          "x-default": "true（multi）；single 恒关"
+        },
+        "header-height": {
+          "type": "number",
+          "x-default": "28"
+        },
+        "header-text": {
+          "$ref": "#/$defs/color"
+        },
+        "header-background": {
+          "$ref": "#/$defs/color"
+        },
+        "header-shadow": {
+          "$ref": "#/$defs/color"
+        },
+        "header-shadow-offset-x": {
+          "type": "number",
+          "x-default": "1"
+        },
+        "header-shadow-offset-y": {
+          "type": "number",
+          "x-default": "1"
+        },
+        "hover": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "reorderable": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "P0-94 Phase 2：行内置换序（引擎内置拖动 + reordered 事件）"
+        },
+        "horizontal-gridlines": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "min-column-width": {
+          "type": "number",
+          "x-default": "20"
+        },
+        "mode": {
+          "enum": [
+            "multi",
+            "single"
+          ],
+          "x-default": "multi"
+        },
+        "multi-select": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "row-height": {
+          "type": "number",
+          "x-default": "24（TREEVIEW_DEFAULT_ROW_HEIGHT 同款）"
+        },
+        "rows": {
+          "type": "array",
+          "description": "行定义 [{id,cells[],cellControls:[{col,control}]}]（元素宽松；P0-66②：cells 元素支持字符串或对象 {text,background-color(串/对象四态 normal+hover),hover-background-color,text-color,font-size,font-name,text-shadow,text-shadow-offset-x/y}）",
+          "items": {
+            "type": "object"
+          }
+        },
+        "selected-index": {
+          "type": "integer",
+          "x-default": "-1"
+        },
+        "sort-ascending": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "sort-column": {
+          "type": "integer",
+          "x-default": "-1"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "label": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "label"
+        },
+        "alignment": {
+          "$ref": "#/$defs/align9",
+          "x-default": "mid-left"
+        },
+        "caption": {
+          "type": "string",
+          "description": "文本内容（对齐运行时属性名 caption）"
+        },
+        "debug-draw": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "expand": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-file": {
+          "type": "string",
+          "description": "字体文件路径（覆盖 font 枚举）"
+        },
+        "font-resource": {
+          "type": "string",
+          "description": "内存字体资源 ID"
+        },
+        "line-height": {
+          "type": "integer"
+        },
+        "line-spacing-ratio": {
+          "type": "number"
+        },
+        "offset": {
+          "type": "object",
+          "description": "阴影偏移 {x,y}"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "size": {
+          "type": "integer",
+          "x-default": "16"
+        },
+        "style": {
+          "type": "string",
+          "description": "字体样式"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "layout-root": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "type": "object",
+          "description": "组件定义（动态机制，校验器跳过）"
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/control-any"
+          }
+        },
+        "dialogs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/control-any"
+          }
+        },
+        "layouts": {
+          "type": "array"
+        },
+        "resourceProviders": {
+          "type": "array",
+          "description": "挂载点数组 [{name, path}]；path 可为文件或目录（目录经 provider:name/相对路径 引用，P0-70）"
+        },
+        "theme": {
+          "type": "object"
+        },
+        "viewport": {
+          "type": "object",
+          "description": "{width,height,scale-mode,background,id}（内部宽松校验）；background 为 #RRGGBB[AA] 或 {r,g,b,a}，alpha=0 表示不填充/不清屏（UI 透出底层画面，P0-74①）；id 为画布代码引用（宿主 FindControl 可定位根画布，P0-74⑥）"
+        }
+      },
+      "additionalProperties": false
+    },
+    "margin": {
+      "type": "object",
+      "properties": {
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "right": {
+          "type": "number"
+        },
+        "bottom": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "menu-bar": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "menu-bar"
+        },
+        "bar-height": {
+          "type": "number"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "item-height-ratio": {
+          "type": "number",
+          "x-default": "1.6"
+        },
+        "manual-position": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "手动定位。缺省 false = 全宽贴顶（Bench 顶层模式）；挂入 panel / v-flow 等布局引擎容器时运行时自动置 true，用户无需显式设置"
+        },
+        "menus": {
+          "type": "array",
+          "description": "顶级菜单 [{caption, items:[...], font, size, item-height-ratio, shadow-radius}]；items 元素 [{id,caption,shortcut,checked,type,items,font,size,leadingGap,leadingControl,text-color,background-color,hover-background-color}]（元素键走全局层；text-color 字符串=normal/对象四态；background-color 字符串或 {normal,hover}；P0-72①④）。items 的 id 注册进实例 id 表（FindControl 可达；与控件 id 同表，重名后注册覆盖——P0-87）",
+          "items": {
+            "type": "object"
+          }
+        },
+        "size": {
+          "type": "integer"
+        },
+        "x": {
+          "type": "integer",
+          "description": "manualPosition 定位"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "w": {
+          "type": "integer"
+        },
+        "h": {
+          "type": "integer"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-menu"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "numeric-up-down": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "numeric-up-down"
+        },
+        "button-width": {
+          "type": "number",
+          "x-default": "28"
+        },
+        "decimals": {
+          "type": "integer",
+          "x-default": "0"
+        },
+        "page-step": {
+          "type": "number",
+          "x-default": "10.0"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "read-only": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "step": {
+          "type": "number",
+          "x-default": "1.0"
+        },
+        "value": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-input"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "panel": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "panel"
+        },
+        "clip-children": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "子项裁剪：超出容器 rect 不绘制（滚动容器/裁剪面板，v1.1.1）"
+        },
+        "background": {
+          "$ref": "#/$defs/color"
+        },
+        "border": {
+          "$ref": "#/$defs/color"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/control-any"
+          }
+        },
+        "col": {
+          "type": "integer"
+        },
+        "colSpan": {
+          "type": "integer",
+          "x-default": "1"
+        },
+        "columns": {
+          "type": "array"
+        },
+        "gap": {
+          "type": "number"
+        },
+        "grid": {
+          "type": "object"
+        },
+        "layout": {
+          "type": "object",
+          "description": "{type: h-flow|v-flow|anchor|grid, ...引擎参数}"
+        },
+        "padding": {
+          "type": "number"
+        },
+        "row": {
+          "type": "integer"
+        },
+        "rowSpan": {
+          "type": "integer",
+          "x-default": "1"
+        },
+        "rows": {
+          "type": "array"
+        },
+        "transparent": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "popup": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "popup"
+        },
+        "centered": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "close-on-click-outside": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "close-on-esc": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "content": {
+          "type": "object",
+          "description": "内容控件描述"
+        },
+        "visible": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-basic2"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "context-menu": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "context-menu"
+        },
+        "close-on-click-outside": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "close-on-esc": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "visible": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-basic2"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "confirm-popup": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "confirm-popup"
+        },
+        "button-gap": {
+          "type": "number",
+          "x-default": "8"
+        },
+        "button-height": {
+          "type": "number",
+          "x-default": "28"
+        },
+        "centered": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "close-on-click-outside": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "close-on-esc": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "confirm-button": {
+          "type": "object",
+          "description": "{text,...} 宽松校验"
+        },
+        "padding": {
+          "type": "number",
+          "x-default": "10"
+        },
+        "text": {
+          "type": "string"
+        },
+        "visible": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-basic2"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "progress-bar": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "progress-bar"
+        },
+        "alignment": {
+          "$ref": "#/$defs/align9"
+        },
+        "animation-speed": {
+          "type": "number",
+          "x-default": "0.1"
+        },
+        "background": {
+          "$ref": "#/$defs/color"
+        },
+        "custom-text": {
+          "type": "string"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "progress": {
+          "$ref": "#/$defs/color"
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "size": {
+          "type": "integer",
+          "x-default": "14"
+        },
+        "style": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ],
+          "x-default": "horizontal"
+        },
+        "text": {
+          "type": "string",
+          "description": "文本色（colors.text 别名）"
+        },
+        "text-mode": {
+          "enum": [
+            "none",
+            "percent",
+            "custom"
+          ],
+          "x-default": "none"
+        },
+        "value": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "rect": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "w": {
+          "type": "integer"
+        },
+        "h": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "x-required": "可整体缺省（缺省全 0）；出现时 x/y/w/h 必填",
+      "additionalProperties": false
+    },
+    "scale": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "x-default": "1.0 / 1.0"
+    },
+    "scroll-bar": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "scroll-bar"
+        },
+        "orientation": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ],
+          "x-default": "vertical"
+        },
+        "page-size": {
+          "type": "number"
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "step-size": {
+          "type": "number"
+        },
+        "thickness": {
+          "type": "number",
+          "x-default": "16"
+        },
+        "value": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-bg"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "shape": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "shape"
+        },
+        "fill": {
+          "$ref": "#/$defs/color",
+          "description": "填充色（缺省透明=空心）"
+        },
+        "line-width": {
+          "type": "number",
+          "x-default": "1"
+        },
+        "points": {
+          "type": "array",
+          "description": "polyline/polygon 顶点（本地像素，随 rect 等比缩放）",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "primitives": {
+          "type": "array",
+          "description": "多图元组合（非空时替代单 shape 渲染）：[{shape,rect:[x,y,w,h],fill,stroke,lineWidth,radius,ringWidth,points}]（元素宽松校验，本地坐标）",
+          "items": {
+            "type": "object"
+          }
+        },
+        "radius": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "ring-width": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "shape": {
+          "enum": [
+            "rect",
+            "filled-rect",
+            "round-rect",
+            "circle",
+            "ellipse",
+            "polyline",
+            "polygon"
+          ],
+          "x-default": "rect"
+        },
+        "stroke": {
+          "$ref": "#/$defs/color",
+          "description": "描边色（缺省黑）"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "slider": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "slider"
+        },
+        "border": {
+          "$ref": "#/$defs/color"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "fill": {
+          "$ref": "#/$defs/color"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "hover": {
+          "$ref": "#/$defs/color"
+        },
+        "interval": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "label-format": {
+          "type": "string"
+        },
+        "label-gap": {
+          "type": "number"
+        },
+        "length": {
+          "type": "number"
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "reverse": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "show-value-label": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "size": {
+          "type": "integer",
+          "description": "数值标签字号"
+        },
+        "step": {
+          "type": "number",
+          "x-default": "1.0"
+        },
+        "thickness": {
+          "type": "number",
+          "description": "轨道粗细"
+        },
+        "tick": {
+          "$ref": "#/$defs/color"
+        },
+        "track": {
+          "$ref": "#/$defs/color"
+        },
+        "thumb": {
+          "$ref": "#/$defs/color"
+        },
+        "value": {
+          "type": "number",
+          "x-default": "0"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "splitter": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "splitter"
+        },
+        "first-linked": {
+          "type": "string",
+          "description": "左侧控件 id"
+        },
+        "first-min": {
+          "type": "number",
+          "x-default": "20"
+        },
+        "second-min": {
+          "type": "number",
+          "x-default": "20"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "horizontal",
+            "vertical"
+          ],
+          "x-default": "vertical",
+          "description": "horizontal/vertical（vertical=左右分栏；解析经 parseSplitter）"
+        },
+        "ratio": {
+          "type": "number",
+          "x-default": "0.5"
+        },
+        "second-linked": {
+          "type": "string",
+          "description": "右侧控件 id"
+        },
+        "thickness": {
+          "type": "number"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-bg3"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "status-bar": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "status-bar"
+        },
+        "font-size": {
+          "type": "integer",
+          "x-default": "13"
+        },
+        "item-height": {
+          "type": "number",
+          "x-default": "24（默认=rect 高）"
+        },
+        "hover": {
+          "$ref": "#/$defs/color",
+          "description": "控件级悬停反馈色（P0-74⑤；段回退链：item 显式 → background.hover → hover → 缺省）"
+        },
+        "items": {
+          "type": "array",
+          "description": "段定义 [{id,text,align:right,icon,menu,onClick,text-color,background-color,hover-background-color}]（元素宽松校验；text-color 字符串=normal / 对象=四态，background-color 单色或 {normal,hover}，hover-background-color 独立悬停色（P0-75））",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text-color": {
+                "description": "#RRGGBB[AA] 字符串（=normal）或 {normal,hover,pressed,disabled} 对象",
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/color"
+                  },
+                  {
+                    "$ref": "#/$defs/state-color-4"
+                  }
+                ]
+              },
+              "background-color": {
+                "$ref": "#/$defs/color"
+              },
+              "font-size": {
+                "type": "number",
+                "x-default": "0",
+                "description": "段级字号（0=继承控件级；P0-58）"
+              },
+              "text-shadow": {
+                "$ref": "#/$defs/color"
+              },
+              "text-shadow-offset-x": {
+                "type": "number",
+                "x-default": "1"
+              },
+              "text-shadow-offset-y": {
+                "type": "number",
+                "x-default": "1"
+              }
+            }
+          }
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "tab-control": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "tab-control"
+        },
+        "currentIndex": {
+          "type": "integer",
+          "x-default": "0"
+        },
+        "font-size": {
+          "type": "integer",
+          "x-default": "13"
+        },
+        "position": {
+          "enum": [
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "x-default": "top"
+        },
+        "tabs": {
+          "type": "array",
+          "description": "页定义 [{title,icon,page:{控件JSON}}]（page 递归解析，缺 rect 铺满内容区；元素宽松校验）",
+          "items": {
+            "type": "object"
+          }
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-full"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "selected-text": {
+          "$ref": "#/$defs/color"
+        },
+        "reorderable": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "P0-94 Phase 2：页签内置换序（引擎内置拖动 + tab-reordered 事件）"
+        },
+        "tab-background": {
+          "$ref": "#/$defs/color",
+          "x-default": "#25252AFF",
+          "description": "常态页签底色（P0-92，单色；默认 37,37,42）"
+        },
+        "tab-hover-background": {
+          "$ref": "#/$defs/color",
+          "x-default": "#3C3C46FF",
+          "description": "悬停页签底色（P0-92；默认 60,60,70）"
+        },
+        "tab-selected-background": {
+          "$ref": "#/$defs/color",
+          "x-default": "#2D2D34FF",
+          "description": "选中页签底色（P0-92；默认 45,45,52）"
+        },
+        "tab-indicator-color": {
+          "$ref": "#/$defs/color",
+          "x-default": "#007ACCFF",
+          "description": "选中指示条色（P0-92；默认 0,122,204）"
+        },
+        "tab-content-background": {
+          "$ref": "#/$defs/color",
+          "x-default": "#323238FF",
+          "description": "内容区底色（P0-92；默认 50,50,56）"
+        },
+        "page-background": {
+          "description": "页背景（P0-92）：#RRGGBB[AA] 字符串（=normal）或 {normal,hover,pressed,disabled} 对象（合并语义；转发所有页）",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/color"
+            },
+            {
+              "$ref": "#/$defs/state-color-4"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "text-area": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "text-area"
+        },
+        "alignment": {
+          "$ref": "#/$defs/align9",
+          "x-default": "mid-left"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "line-height": {
+          "type": "integer"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "scrollbar-thickness": {
+          "type": "number"
+        },
+        "size": {
+          "type": "integer",
+          "x-default": "16"
+        },
+        "text": {
+          "type": "string",
+          "x-default": ""
+        },
+        "auto-scroll": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "true=日志式恒滚到底；false=编辑式光标跟随（缺省）"
+        },
+        "read-only": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "只读（P0-83，继承 EditBox）：禁编辑/插入，保留选择/复制/滚动/光标/焦点"
+        },
+        "word-wrap": {
+          "type": "boolean"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-input"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "tree-view": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "type": {
+          "const": "tree-view"
+        },
+        "cycle-navigation": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "default-expand": {
+          "type": "boolean",
+          "x-default": "false"
+        },
+        "hover": {
+          "$ref": "#/$defs/color",
+          "description": "行悬停底色（P0-74②，单色）"
+        },
+        "reorderable": {
+          "type": "boolean",
+          "x-default": "false",
+          "description": "P0-94 Phase 2：节点内置换序/换父（引擎内置拖动 + reordered 事件）"
+        },
+        "indent-width": {
+          "type": "number",
+          "x-default": "16"
+        },
+        "selected": {
+          "$ref": "#/$defs/color",
+          "description": "行选中底色（P0-74②，单色）"
+        },
+        "items": {
+          "type": "array",
+          "description": "节点树 [{id,label,expanded,userData,children,leadingControl,leadingGap,leadingAlign,font,size,text-color,background-color,hover-background-color,text-shadow,text-shadow-offset-x/y}]（元素键走全局层；样式键 P0-62②，text-color 字符串=normal/对象=四态，未设继承控件级；hover-background-color 独立悬停色 P0-75）",
+          "items": {
+            "type": "object"
+          }
+        },
+        "row-height": {
+          "type": "number"
+        },
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "w": {
+          "type": "integer"
+        },
+        "h": {
+          "type": "integer"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-3state"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "win-frame": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/$defs/common"
+        }
+      ],
+      "properties": {
+        "shadow": {
+          "$ref": "#/$defs/shadow"
+        },
+        "type": {
+          "const": "win-frame"
+        },
+        "bg": {
+          "$ref": "#/$defs/color"
+        },
+        "children": {
+          "type": "array",
+          "description": "客户区子控件",
+          "items": {
+            "$ref": "#/$defs/control-any"
+          }
+        },
+        "edge-margin": {
+          "type": "number",
+          "x-default": "4.0"
+        },
+        "resizable": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "title": {
+          "type": "string",
+          "x-default": "WinFrame"
+        },
+        "title-bar": {
+          "type": "object",
+          "description": "{bg: color} 标题栏背景，宽松校验"
+        },
+        "title-text": {
+          "$ref": "#/$defs/color"
+        },
+        "colors": {
+          "$ref": "#/$defs/colors-winframe"
+        },
+        "border-visible": {
+          "type": "boolean",
+          "x-default": "true"
+        },
+        "font": {
+          "$ref": "#/$defs/font-spec"
+        },
+        "font-size": {
+          "type": "integer",
+          "description": "字号；font.size 的便捷形式（v1.1.1）"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "state-color-4": {
+      "type": "object",
+      "properties": {
+        "normal": {
+          "$ref": "#/$defs/color"
+        },
+        "hover": {
+          "$ref": "#/$defs/color"
+        },
+        "pressed": {
+          "$ref": "#/$defs/color"
+        },
+        "disabled": {
+          "$ref": "#/$defs/color"
+        }
+      },
+      "additionalProperties": false,
+      "description": "状态色对象（normal/hover/pressed/disabled；值同 color）"
+    },
+    "state-color-3d": {
+      "type": "object",
+      "properties": {
+        "normal": {
+          "$ref": "#/$defs/color"
+        },
+        "hover": {
+          "$ref": "#/$defs/color"
+        },
+        "disabled": {
+          "$ref": "#/$defs/color"
+        }
+      },
+      "additionalProperties": false,
+      "description": "状态色对象（normal/hover/disabled；值同 color）"
+    },
+    "state-color-3p": {
+      "type": "object",
+      "properties": {
+        "normal": {
+          "$ref": "#/$defs/color"
+        },
+        "hover": {
+          "$ref": "#/$defs/color"
+        },
+        "pressed": {
+          "$ref": "#/$defs/color"
+        }
+      },
+      "additionalProperties": false,
+      "description": "状态色对象（normal/hover/pressed；值同 color）"
+    },
+    "state-color-1": {
+      "type": "object",
+      "properties": {
+        "normal": {
+          "$ref": "#/$defs/color"
+        }
+      },
+      "additionalProperties": false,
+      "description": "状态色对象（normal；值同 color）"
+    },
+    "colors-full": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-4"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-4"
+        },
+        "text": {
+          "$ref": "#/$defs/state-color-4"
+        },
+        "text-shadow": {
+          "$ref": "#/$defs/state-color-4"
+        }
+      },
+      "additionalProperties": false,
+      "description": "视觉色组（背景/边框/文本/文本阴影，四态）"
+    },
+    "colors-bg": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-4"
+        }
+      },
+      "additionalProperties": false,
+      "description": "视觉色组（仅背景，四态）"
+    },
+    "colors-menu": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-4"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "text": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "text-shadow": {
+          "$ref": "#/$defs/state-color-3d"
+        }
+      },
+      "additionalProperties": false,
+      "description": "菜单色组（统一三态 N/H/D；覆盖 bar/panel/item）"
+    },
+    "state-color-2": {
+      "type": "object",
+      "properties": {
+        "normal": {
+          "$ref": "#/$defs/color"
+        },
+        "hover": {
+          "$ref": "#/$defs/color"
+        }
+      },
+      "additionalProperties": false,
+      "description": "状态色对象（normal/hover；值同 color）"
+    },
+    "colors-winframe": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-2"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-2"
+        },
+        "text": {
+          "$ref": "#/$defs/state-color-4"
+        },
+        "text-shadow": {
+          "$ref": "#/$defs/state-color-4"
+        }
+      },
+      "additionalProperties": false,
+      "description": "WinFrame 色组（bg/border 两态→ClientPanel/整体窗框；text/ts 四态）"
+    },
+    "colors-input": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "text": {
+          "$ref": "#/$defs/state-color-1"
+        }
+      },
+      "additionalProperties": false,
+      "description": "输入控件色组（bg/border 三态 N/H/D；text 单态；无 text-shadow）"
+    },
+    "colors-3full": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "text": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "text-shadow": {
+          "$ref": "#/$defs/state-color-3d"
+        }
+      },
+      "additionalProperties": false,
+      "description": "三态全组（progress-bar；无 pressed）"
+    },
+    "colors-3state": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-3d"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-3d"
+        }
+      },
+      "additionalProperties": false,
+      "description": "三态 bg/border（panel/shape/image/animation/list/tree 控件级）"
+    },
+    "colors-bg3": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-3d"
+        }
+      },
+      "additionalProperties": false,
+      "description": "三态背景（splitter）"
+    },
+    "colors-basic2": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "$ref": "#/$defs/state-color-2"
+        },
+        "border": {
+          "$ref": "#/$defs/state-color-2"
+        }
+      },
+      "additionalProperties": false,
+      "description": "两态 bg/border（dialog/popup/confirm-popup）"
+    }
+  },
+  "version": "1.2.0"
+}

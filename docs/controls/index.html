@@ -1,0 +1,153 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4 控件概念与共性 - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/index.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4 控件概念与共性</h1>
+
+<p>本章逐个讲解 21 个控件。阅读任一控件页前，建议先掌握本节描述的<strong>控件共同骨架</strong>。</p>
+
+<h2>继承体系</h2>
+
+<pre><code>Control（根抽象：位置/尺寸/可见性/父指针/事件入口）
+ └─ ControlImpl（通用实现：状态色、属性系统、焦点支持）
+     ├─ Label / Button / CheckBox / EditBox / Slider / ScrollBar /
+     │  ProgressBar / ComboBox / NumericUpDown / Splitter /
+     │  HandleControl / TextArea / ColorPicker / TreeView / Menu 三件套 /
+     │  ListView / StatusBar / TabControl / Shape ...
+     │  （ContextMenu → Popup，见弹窗族）
+     └─ Panel（容器：子控件管理 + 布局引擎）
+         ├─ Bench（控件树根 / 测试台，也是 TopControl）
+         ├─ WinFrame（可拖拽缩放的窗口容器）
+         └─ Dialog → ConfirmPopup → Popup（弹窗族）
+ 旁支：Actor → Material → ControlImpl（纯图片显示）
+     LuotiAni → Material → ControlImpl（关键帧动画）</code></pre>
+
+<h2>每个控件的六个共同维度</h2>
+
+<p>本手册的每个控件页都按固定六节组织：</p>
+
+<table>
+<tr><th>节</th><th>内容</th></tr>
+<tr><td>控件的创建</td><td>C++ 构造 / Builder / C ABI 创建函数 / JSON type</td></tr>
+<tr><td>控件的方法</td><td>核心引擎 C++ 类的全部公开方法（签名 + 说明）</td></tr>
+<tr><td>控件的属性</td><td>属性系统键名：类型、默认值、说明（C ABI / C++ Binding 的 Set*/Get* 键）</td></tr>
+<tr><td>控件的回调</td><td>事件名、触发时机、负载（C ABI / C++ Binding 的 SetCallback 事件名）</td></tr>
+<tr><td>JSON 语法</td><td>真实布局 JSON 节点示例</td></tr>
+<tr><td>C++ Binding 样例</td><td>可运行的绑定用法代码</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+<h2>所有控件的共性</h2>
+
+<h3>位置与尺寸（SRect）</h3>
+
+<pre><code>struct SRect { float x, y, w, h; };
+struct SPoint { float x, y; };
+struct SSize  { float w, h; };
+struct SColor { uint8_t r, g, b, a; };</code></pre>
+
+<p>所有控件构造都接受 <code>SRect</code>；Builder 接受 <code>SRect</code>；C ABI 工厂接受 <code>x,y,w,h</code> 四个浮点。</p>
+
+<h3>状态色（StateColor）</h3>
+
+<p>颜色类属性多为「状态色」：同一控件在不同状态（<code>normal / hover / pressed / disabled</code>）可有不同颜色。JSON 中写为：</p>
+
+<pre><code>"colors": { "background": {
+    "normal": "#3C3C3CFF", "hover": "#4C4C4CFF",
+    "pressed": "#2C2C2CFF", "disabled": "#808080FF" } }</code></pre>
+
+<h3>通用属性（每个控件都有）</h3>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>background</code></td><td><code>kBackground</code></td><td>StateColor</td><td>背景 / 边框状态色</td></tr>
+<tr><td><code>border</code></td><td><code>kBorder</code></td><td>StateColor</td><td>背景 / 边框状态色</td></tr>
+<tr><td><code>border-visible</code></td><td><code>kBorderVisible</code></td><td>Bool</td><td>边框可见</td></tr>
+<tr><td><code>enabled</code></td><td><code>kEnabled</code></td><td>Bool</td><td>是否响应交互</td></tr>
+<tr><td><code>text</code></td><td><code>kText</code></td><td>StateColor</td><td>文本色 / 文本阴影色（含文本的控件）</td></tr>
+<tr><td><code>text-shadow</code></td><td><code>kTextShadow</code></td><td>StateColor</td><td>文本色 / 文本阴影色（含文本的控件）</td></tr>
+<tr><td><code>transparent</code></td><td><code>kTransparent</code></td><td>Bool</td><td>背景透明（不绘制背景）</td></tr>
+<tr><td><code>visible</code></td><td><code>kVisible</code></td><td>Bool</td><td>可见性</td></tr>
+</table>
+
+<h3>三种创建方式</h3>
+
+<pre><code>// 1) C++ 直接构造（继承自核心库的控件）
+auto btn = make_shared&lt;Button&gt;(parent, SRect(20, 20, 120, 36));
+BENCH->addControl(btn);
+
+// 2) Builder（推荐：链式配置 + 更完整的高级选项）
+auto btn = ButtonBuilder(parent, SRect(20, 20, 120, 36))
+    .setCaption("OK").setOnClick(cb).build();
+
+// 3) C ABI 工厂（经 UICornerstoneAPI.h）
+UIControlHandle btn = UICornerstone_CreateButton(g_inst, "OK", 20, 20, 120, 36, 1.0f, 1.0f);</code></pre>
+
+<h3>父控件与控件树</h3>
+
+<ul>
+  <li>容器（Panel 族）用 <code>addControl(shared_ptr&lt;Control&gt;)</code> 挂子控件；</li>
+  <li>顶层控件都挂到 <code>BENCH</code>（每个 UIContext 的控件树根，见 <a href="bench.html">4.2 Bench</a>）；</li>
+  <li>控件树遍历：<code>findControlById(id)</code> 按 id 查找（JSON 布局的 id 即用此查询）；</li>
+  <li>C ABI：<code>UICornerstone_FindControl(inst, "id")</code> 返回句柄，之后统一走属性系统操作。</li>
+</ul>
+
+<h3>C++ Binding 的 Control 代理</h3>
+
+<p>Binding 中所有工厂返回 <code>Control</code> 代理对象，统一属性 API：</p>
+
+<pre><code>Control c = ui->CreateButton("OK", 20, 20, 120, 36);
+c.SetString(PropertyNames::kCaption, "OK");
+c.SetBool(PropertyNames::kEnabled, false);
+c.SetCallback(PropertyNames::kEventClick, [](const Event&){ /* ... */ });
+c.SetStateColor(PropertyNames::kBackground, n, h, p, d);   // 四态背景
+std::string s = c.GetString(PropertyNames::kCaption);</code></pre>
+
+<h3>方法表与 C ABI / C++ Binding 的关系（重要）</h3>
+
+<p>每个控件页「控件的方法」一节列出的 <code>setXxx</code> 是<strong>核心引擎 C++ 类</strong>（<code>include/</code> 头文件）的公开方法——仅当直接以 C++ 方式继承/使用核心类（源码级集成）时才能调用。C ABI 与 C++ Binding 是<strong>扁平化属性接口</strong>，不导出同名方法：</p>
+
+<table>
+<tr><th>能力</th><th>核心 C++ 类</th><th>C ABI（UICornerstoneAPI.h）</th><th>C++ Binding（Control.h）</th></tr>
+<tr><td>树操作</td><td><code>addControl(...)</code> / <code>removeControl(...)</code></td><td><code>UICornerstone_AddChildControl(inst, parent, child)</code> / <code>UICornerstone_RemoveChild(inst, parent, child)</code></td><td><code>Control.AddChild(child)</code> / <code>Control.RemoveChild(child)</code> / <code>ui-&gt;AddChild(parent, child)</code></td></tr>
+<tr><td>设置文本 / 数值 / 开关</td><td><code>setCaption(...)</code> 等</td><td><code>UICornerstone_SetString / SetInt / SetFloat / SetBool(inst, ctl, 属性名, ...)</code></td><td><code>Control.SetString / SetInt / SetFloat / SetBool(属性名, ...)</code></td></tr>
+<tr><td>设置颜色</td><td><code>setColor(...)</code> 等</td><td><code>UICornerstone_SetColor / SetStateColor(inst, ctl, 属性名, ...)</code></td><td><code>Control.SetColor / SetStateColor(属性名, ...)</code></td></tr>
+<tr><td>绑定事件</td><td><code>setOnClick(...)</code> 等</td><td><code>UICornerstone_SetCallback(inst, ctl, 事件名, cb, ud)</code></td><td><code>Control.SetCallback(事件名, lambda)</code></td></tr>
+<tr><td>位置尺寸</td><td><code>setRect(...)</code></td><td><code>UICornerstone_SetRect(inst, ctl, x, y, w, h)</code></td><td><code>Control.SetRect(x, y, w, h)</code></td></tr>
+<tr><td>销毁</td><td>—（引用计数释放）</td><td><code>UICornerstone_DestroyControl(inst, ctl)</code></td><td><code>Control.Destroy()</code></td></tr>
+</table>
+
+<p>因此：<strong>只使用 C ABI / C++ Binding 的用户请以「控件的属性」表的键名 + 「控件的回调」表的事件名通过泛型 <code>Set*/Get*</code> / <code>SetCallback</code> 操作控件</strong>；属性键名（如 <code>caption</code>、<code>shadow</code>）在 <a href="../appendix/properties.html">附录 9 属性总表</a> 与 <code>include/PropertyNames.h</code> 中列出。</p>
+
+<div class="note">「控件的方法」一节仅供源码级集成（直接使用核心类）的开发者参考；方法表中部分高级方法（如挂载 Actor / LuotiAni 对象、自定义 CaptionLabel）在 C ABI / Binding 中不一定有等价属性键，属核心类专属能力。</div>
+
+<h2>截图</h2>
+
+<div class="img-frame img-frame-s">
+  <img src="../assets/CheckBox图样.svg" alt="CheckBox 图样">
+  <div class="img-caption">CheckBox 样式图样（classic / cross / circle）</div>
+</div>
+<div class="img-frame img-frame-s">
+  <img src="../assets/ColorPicker_Popup.svg" alt="ColorPicker 弹窗">
+  <div class="img-caption">ColorPicker 弹窗：预设色网格 + RGB/Hex 调节</div>
+</div>
+
+<div class="chapter-nav">
+  <a href="../luotiani.html">← 3.7 洛蒂动画</a>
+  <a href="actor.html">下一节：4.1 Actor →</a>
+</div>
+
+</div>
+</body>
+</html>

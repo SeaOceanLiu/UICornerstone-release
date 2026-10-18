@@ -1,0 +1,169 @@
+﻿ï»¿ï»¿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4.20 Slider - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="controls/slider.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>4.20 Slider（滑块）</h1>
+
+<p>Slider 是拖拽取值控件：水平 / 垂直方向、反向模式、步长吸附（松手 Snap-on-Release）、刻度标记、可选数值标签（内部 Label，支持自定义格式）。继承链：<code>Slider → ControlImpl → Control</code>。</p>
+
+<div class="note">缩放联动：刻度字体随复合缩放系数懒加载重建（字体数据复用，无重复 IO）；数值标签为内部 Label 随树自动重建。详见 <a href="../advanced/canvas-scale.html">5.6.6</a>。</div>
+
+<h2>4.20.1 控件的创建</h2>
+
+<pre><code>// C++
+Slider(Control* parent, SRect rect, float xScale = 1.0f, float yScale = 1.0f);
+SliderBuilder(parent, SRect(HX, 40, 250, 20)).setRange(0, 100).setValue(50).setShowValueLabel(true).build();
+
+// C ABI
+UIControlHandle slider = UICornerstone_CreateSlider(g_inst, 29, 224, 257, 20, 0, 255, 255, 1.0f, 1.0f);
+
+// JSON
+{ "id": "rSlider", "type": "slider",
+  "rect": { "x": 29, "y": 224, "w": 257, "h": 20 },
+  "range": { "min": 0, "max": 255 }, "value": 255, "step": 1,
+  "style": "Horizontal", "reverse": false,
+  "show-value-label": true, "label-format": "%.0f",
+  "track": { "thickness": 4, "color": { "normal": "#3C3C3CFF" }, "fill": { "normal": "#0078FFFF" } },
+  "thumb": { "size": 16, "color": { "normal": "#FFFFFFFF" }, "border": { "normal": "#0078FFFF" } },
+  "tick": { "interval": 10, "length": 8, "color": { "normal": "#646464FF" } },
+  "events": { "onValueChanged": "onColorChange" } }</code></pre>
+
+
+<h2>4.20.2 控件的属性</h2>
+
+<table>
+<tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td><code>background</code></td><td><code>kBackground</code></td><td>StateColor</td><td>主题</td><td>通用状态色</td></tr>
+<tr><td><code>border</code></td><td><code>kBorder</code></td><td>StateColor</td><td>主题</td><td>通用状态色</td></tr>
+<tr><td><code>label-font</code></td><td><code>kLabelFont</code></td><td>Enum</td><td>继承</td><td>数值标签字体（同通用字体枚举）</td></tr>
+<tr><td><code>label-format</code></td><td><code>kLabelFormat</code></td><td>String</td><td>—</td><td>标签格式（如 "%.0f px"）</td></tr>
+<tr><td><code>label-gap</code></td><td><code>kLabelGap</code></td><td>Float</td><td>4</td><td>数值标签间距</td></tr>
+<tr><td><code>range-min</code></td><td><code>kRangeMin</code></td><td>Float</td><td>0 / 100</td><td>范围</td></tr>
+<tr><td><code>range-max</code></td><td><code>kRangeMax</code></td><td>Float</td><td>0 / 100</td><td>范围</td></tr>
+<tr><td><code>reverse</code></td><td><code>kReverse</code></td><td>Bool</td><td>false</td><td>反向模式</td></tr>
+<tr><td><code>show-value-label</code></td><td><code>kShowValueLabel</code></td><td>Bool</td><td>false</td><td>显示数值标签</td></tr>
+<tr><td><code>step</code></td><td><code>kStep</code></td><td>Float</td><td>1.0</td><td>步长</td></tr>
+<tr><td><code>style</code></td><td><code>kSliderStyle</code></td><td>Enum</td><td><code>kOrientHorizontal</code></td><td><code>kOrientHorizontal</code> / <code>kOrientVertical</code></td></tr>
+<tr><td><code>thumb-size</code></td><td><code>kThumbSize</code></td><td>Float</td><td>16</td><td>手柄尺寸</td></tr>
+<tr><td><code>tick-interval</code></td><td><code>kTickInterval</code></td><td>Float</td><td>0 / 8</td><td>刻度间隔 / 长度</td></tr>
+<tr><td><code>tick-length</code></td><td><code>kTickLength</code></td><td>Float</td><td>0 / 8</td><td>刻度间隔 / 长度</td></tr>
+<tr><td><code>track</code></td><td><code>kTrack</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>track-fill</code></td><td><code>kTrackFill</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>thumb</code></td><td><code>kThumb</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>thumb-border</code></td><td><code>kThumbBorder</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>thumb-hover</code></td><td><code>kThumbHover</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>tick</code></td><td><code>kTick</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>label</code></td><td><code>kLabelColor</code></td><td>Color</td><td>见右</td><td>track(60,60,60) / track-fill(0,120,255) / thumb 白 / thumb-border(0,120,255) / thumb-hover(200,200,200) / tick(100,100,100) / label 白</td></tr>
+<tr><td><code>track-thickness</code></td><td><code>kTrackThickness</code></td><td>Float</td><td>4</td><td>轨道厚度</td></tr>
+<tr><td><code>value</code></td><td><code>kValue</code></td><td>Float</td><td>0</td><td>当前值</td></tr>
+</table>
+<p class="note">枚举值与常量对应（如 <code>classic</code> ↔ <code>kStyleClassic</code>）见 <a href="../appendix/properties.html#7-3">7.3 枚举值速查</a>。</p>
+
+
+<h2>4.20.3 控件的回调</h2>
+
+<table>
+<tr><th>事件名</th><th>事件常量</th><th>触发时机</th><th>参数</th></tr>
+<tr><td><code>value-changed</code></td><td><code>kEventValueChanged</code></td><td>松手吸附（Snap-on-Release）、点击轨道、外部 setValue、方向键时触发；<strong>拖拽过程中不触发</strong></td><td>Float（floatVal）</td></tr>
+</table>
+
+
+<h2>4.20.4 JSON 语法</h2>
+
+<pre><code>{
+  "id": "rSlider",
+  "type": "slider",
+  "rect": { "x": 29, "y": 224, "w": 257, "h": 20 },
+  "range": { "min": 0, "max": 255 },
+  "value": 255,
+  "step": 1,
+  "style": "Horizontal",
+  "reverse": false,
+  "show-value-label": true,
+  "label-format": "%.0f",
+  "label-gap": -8,
+  "track": { "thickness": 4, "color": { "normal": "#3C3C3CFF" }, "fill": { "normal": "#0078FFFF" } },
+  "thumb": { "size": 16, "color": { "normal": "#FFFFFFFF" }, "border": { "normal": "#0078FFFF" } },
+  "tick": { "interval": 10, "length": 8, "color": { "normal": "#646464FF" } },
+  "events": { "onValueChanged": "onColorChange" }
+}</code></pre>
+
+
+<h2>4.20.5 C++ Binding 样例</h2>
+
+<pre><code>Control slider = ui->CreateSlider(20, 20, 300, 30, 0, 100, 50);
+slider.SetFloat(PropertyNames::kValue, 50.0f);
+slider.SetBool(PropertyNames::kShowValueLabel, true);
+slider.SetString(PropertyNames::kLabelFormat, "%.0f px");
+slider.SetEnum(PropertyNames::kSliderStyle, PropertyNames::kOrientHorizontal);
+slider.SetCallback(PropertyNames::kEventValueChanged, [](const Event& e) {
+    printf("value = %.1f\n", e.GetValueChanged());
+});
+
+// 核心库
+auto s1 = SliderBuilder(nullptr, SRect(HX, 40, 250, 20))
+    .setRange(0, 100).setValue(50).setShowValueLabel(true)
+    .setOnValueChanged([](shared_ptr<Slider> s, float v) {
+        cout << "Slider1 value changed to: " << v << endl;
+    })
+    .build();
+BENCH->addControl(s1);</code></pre>
+
+
+<h2>4.20.6 C ABI 调用样例</h2>
+
+<pre><code>// 创建即带 min / max / 当前值
+UIControlHandle sl = UICornerstone_CreateSlider(g_inst, 20, 20, 260, 20, 0, 100, 50, 1.0f, 1.0f);
+
+UICornerstone_SetFloat(g_inst, sl, "value", 75);
+UICornerstone_SetFloat(g_inst, sl, "step", 5);
+UICornerstone_SetBool(g_inst, sl, "show-value-label", 1);
+
+static void onSlide(UIControlHandle ctl, const UIEventData* ev, void* ud) {
+    /* ev->data.doubleVal / floatVal 为新值 */
+}
+UICornerstone_SetCallback(g_inst, sl, "value-changed", onSlide, NULL);</code></pre>
+<details class="methods">
+<summary>4.20.7 控件的方法（核心引擎内部 API，点击展开）</summary>
+
+<div class="note">本节为核心引擎 C++ 类（include/ 头文件）的公开方法，仅源码级集成（直接使用核心类）可调用。只使用 <strong>C ABI / C++ Binding</strong> 的用户请按「控件的属性」键名（Set*/Get*）与「控件的回调」事件名（SetCallback）等价操作。</div>
+<table>
+<tr><th>方法</th><th>参数</th></tr>
+<tr><td><code>isFocused()</code></td><td>焦点状态</td></tr>
+<tr><td><code>setLabelFont(FontName)</code>、<code>setLabelFontSize(int)</code>、<code>setLabelColor(SColor)</code>、<code>setLabelFormat(string)</code>、<code>setLabelGap(float)</code>（默认 4）</td><td>标签字体 / 格式 / 间距</td></tr>
+<tr><td><code>setOnValueChanged(OnValueChangedHandler)</code></td><td>值变化回调（仅提交时触发）</td></tr>
+<tr><td><code>setRange(float min, float max)</code> / <code>getMinValue()</code> / <code>getMaxValue()</code></td><td>范围（默认 0~100）</td></tr>
+<tr><td><code>setReverse(bool)</code> / <code>getReverse()</code></td><td>反向（min 在右 / 底部）</td></tr>
+<tr><td><code>setShowValueLabel(bool)</code> / <code>isShowValueLabel()</code> / <code>getValueLabel()</code></td><td>数值标签开关 / 获取</td></tr>
+<tr><td><code>setStep(float)</code> / <code>getStep()</code></td><td>步长（松手吸附到 step）</td></tr>
+<tr><td><code>setStyle(SliderStyle)</code> / <code>getStyle()</code></td><td>Horizontal / Vertical（默认 Horizontal）</td></tr>
+<tr><td><code>setTickInterval(float)</code> / <code>getTickInterval()</code>（默认 0=关闭）、<code>setTickLength(float)</code> / <code>getTickLength()</code>（默认 8）、<code>setTickColor(SColor)</code> / <code>getTickColor()</code></td><td>刻度标记</td></tr>
+<tr><td><code>setTrackColor / setTrackFillColor / setThumbColor / setThumbBorderColor / setThumbHoverColor(SColor)</code>（+getter）</td><td>视觉颜色</td></tr>
+<tr><td><code>setTrackThickness(float)</code> / <code>getTrackThickness()</code>（默认 4）、<code>setThumbSize(float)</code> / <code>getThumbSize()</code>（默认 16）</td><td>轨道 / 手柄尺寸</td></tr>
+<tr><td><code>setValue(float)</code> / <code>getValue()</code> / <code>getPercent()</code></td><td>值 / 百分比</td></tr>
+</table>
+
+</details>
+
+
+
+
+<div class="chapter-nav">
+  <a href="shape.html">← 4.19 Shape（形状）</a>
+  <a href="splitter.html">下一节：4.21 Splitter →</a>
+</div>
+
+</div>
+</body>
+</html>

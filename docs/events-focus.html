@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.5 事件 - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="css/style.css">
+<script id="nav-data" src="assets/nav.js" data-prefix="" data-current="events-focus.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>3.5 事件</h1>
+
+<h2>3.5.1 事件分发链路</h2>
+
+<p>一条事件从后端到控件的完整路径：</p>
+
+<pre><code>InputBackend::pollEvent（后端原生事件 → Event(EventType + union 数据)）
+  → MainWindow::processEvents（WindowClose 退出 / Resize / Moved 处理，其余入队）
+  → Bench::inputControl → EventQueue（事件队列）
+  → Bench::eventLoopEntry 出队
+  → notifyBeforeEventHandlingWatchers（消费则跳过）
+  → 控件树逆向 Z 序分派（返回 true 停止传播）
+  → notifyAfterEventHandlingWatchers
+  → Tab 键由 Bench 拦截转 FocusManager 导航</code></pre>
+
+<h2>3.5.2 事件类型（C ABI）</h2>
+
+<pre><code>UI_EVENT_NONE, UI_EVENT_MOUSE_MOVE, UI_EVENT_MOUSE_DOWN, UI_EVENT_MOUSE_UP,
+UI_EVENT_MOUSE_WHEEL, UI_EVENT_KEY_DOWN, UI_EVENT_KEY_UP, UI_EVENT_TEXT_INPUT,
+UI_EVENT_WINDOW_RESIZE, UI_EVENT_WINDOW_CLOSE, UI_EVENT_FOCUS_GAINED, UI_EVENT_FOCUS_LOST</code></pre>
+
+<p>访问宏：<code>UI_EVENT_MOUSE_X(ev)</code>、<code>UI_EVENT_MOUSE_Y(ev)</code>、<code>UI_EVENT_BUTTON(ev)</code>、<code>UI_EVENT_KEY_CODE(ev)</code>、<code>UI_EVENT_KEY_MOD(ev)</code>、<code>UI_EVENT_TEXT(ev)</code>、<code>UI_EVENT_WHEEL_DELTA(ev)</code>、<code>UI_EVENT_RESIZE_W/H(ev)</code>。</p>
+
+<h2>3.5.3 控件事件与回调</h2>
+
+<p>控件层的事件统一走属性系统回调（见 <a href="property-system.html">3.3 属性系统</a>），事件名常量在 <code>PropertyNames.h</code>：</p>
+
+<table>
+<tr><th>事件名</th><th>触发时机</th><th>Binding 具名访问器</th></tr>
+<tr><td><code>check-changed</code></td><td>复选框状态变化</td><td><code>GetCheckState()</code>（0/1/2）</td></tr>
+<tr><td><code>click</code></td><td>按钮/标签点击，焦点态 Enter/Space</td><td>—</td></tr>
+<tr><td><code>color-changed</code></td><td>取色器提交颜色</td><td>颜色负载</td></tr>
+<tr><td><code>confirm</code> / <code>cancel</code> / <code>close</code></td><td>弹窗确认/取消/关闭</td><td><code>GetCloseResult()</code></td></tr>
+<tr><td><code>enter</code></td><td>输入框回车</td><td>—</td></tr>
+<tr><td><code>moved</code></td><td>分割条拖拽结束</td><td><code>GetMovedPosition()</code></td></tr>
+<tr><td><code>position-changed</code></td><td>滚动条位置变化</td><td><code>GetPositionChanged()</code></td></tr>
+<tr><td><code>mouse-wheel</code></td><td>Panel 容器级滚轮（面板内且子控件未消费；载荷 Float=scrollY，+1 向上 / -1 向下）</td><td><code>GetValueChanged()</code></td></tr>
+<tr><td><code>select</code> / <code>expand</code> / <code>collapse</code></td><td>树视图选中/展开/折叠</td><td><code>GetNodeId()</code> / <code>GetNodeUserData()</code></td></tr>
+<tr><td><code>selection-changed</code></td><td>下拉框选中变化</td><td><code>GetSelectedIndex()</code> / <code>GetSelectedValue()</code></td></tr>
+<tr><td><code>text-changed</code></td><td>文本变化</td><td><code>GetTextChanged()</code></td></tr>
+<tr><td><code>value-changed</code></td><td>滑块/进度条/数值框值变化</td><td><code>GetValueChanged()</code></td></tr>
+</table>
+
+<h2>坐标参照系约定（事件 / 控件矩形）</h2>
+
+<p>引擎存在三套坐标域，混用是集成常见坑，明确如下：</p>
+
+<table>
+<tr><th>域</th><th>取得方式</th><th>说明</th></tr>
+<tr><td><b>父局部域</b></td><td><code>UICornerstone_GetRect</code> / 控件 <code>getRect()</code></td><td>控件矩形相对<b>直接父容器</b>的原值（即 JSON <code>rect</code> 语义）；布局设置（SetRect）亦用此域。</td></tr>
+<tr><td><b>窗口全局域</b></td><td><code>getDrawRect()</code>（引擎内部）/ <code>UICornerstone_HandleHitTest</code> 入参 / 手柄区域</td><td>父链递归累加后的屏幕坐标（视口根 rect 已含窗口位置）；<b>子视口场景不要再减视口偏移</b>。</td></tr>
+<tr><td><b>事件坐标</b></td><td><code>UIEvent</code> 的 <code>mousePos</code> / <code>mouseButton.x,y</code> / <code>mouseWheel.x,y</code></td><td>与<b>窗口全局域</b>一致（直接与 <code>getDrawRect</code> 比较命中，无需换算）。</td></tr>
+</table>
+
+<p class="note"><code>mouse-wheel</code> 回调载荷仅 <code>scrollY</code>（Float，+1 向上 / -1 向下），不含坐标；事件坐标域由引擎分发保证（命中判定用窗口全局域）。</p>
+
+<h2>3.5.4 Event 类通用访问器</h2>
+
+<pre><code>e.GetIntVal();       // 原始负载：整数
+e.GetFloatVal();     // 原始负载：浮点
+e.GetDoubleVal();    // 原始负载：双精度（NumericUpDown）
+e.GetStrVal();       // 原始负载：字符串
+e.GetPtrVal();       // 原始负载：指针</code></pre>
+
+<h2>3.5.5 应用 / 游戏的事件适配（PushUIEvent）</h2>
+
+<p>除后端原生输入外，应用/游戏可自行构造事件注入，与原生事件汇合后走同一分派链路（3.5.1 中 <code>EventQueue</code> 之前）：</p>
+
+<pre><code>UICornerstone_PushUIEvent(instance, &amp;ev)   // 跨线程安全：任意线程构造，帧循环消费
+  → 注入队列（锁保护，含 auto-quit 定时器线程的场景）
+  → MainWindow::processEvents → Bench::inputControl
+  → 与后端原生事件同一队列 → 同一分派链路</code></pre>
+
+<p>适用场景：</p>
+<ul>
+  <li><strong>游戏循环</strong>：手柄 / 触摸屏 / 手势层识别出的"虚拟鼠标"事件，转成 <code>UI_EVENT_MOUSE_MOVE / MOUSE_DOWN / MOUSE_UP</code> 注入；</li>
+  <li><strong>无窗口 / 离屏后端</strong>：窗口事件（Resize / Close）与键盘、焦点事件完全由宿主注入；</li>
+  <li><strong>自定义输入拦截</strong>：应用先于后端消费原始输入（视频流、体感），只把需要 UI 处理的部分转发；</li>
+  <li><strong>自动化 / 录制回放</strong>：测试用例回放鼠标序列（与 <code>test_scale_json</code> 等自动化样例同思路）。</li>
+</ul>
+
+<p>事件类型与负载布局见 3.5.2；构造示例（C）：</p>
+
+<pre><code>UIEvent ev;
+ev.type = UI_EVENT_MOUSE_DOWN;
+UI_EVENT_MOUSE_X(&amp;ev)   = 400.0f;   // data[0..3]
+UI_EVENT_MOUSE_Y(&amp;ev)   = 300.0f;   // data[4..7]
+UI_EVENT_BUTTON(&amp;ev)    = 0;        // 0=左键
+UICornerstone_PushUIEvent(inst, &amp;ev);</code></pre>
+
+<p>注意：<code>UI_EVENT_*</code> 便捷宏同时可读写，负载字段固定偏移即可用 <code>UI_EVENT_BUF_SIZE</code>（128 B）内的任意布局；跨线程注入的事件在帧循环出队时按一次一个分派，不抢占正在处理的回调。</p>
+
+<p>焦点与键盘导航（Tab 环 / 焦点边界 / 作用域切换 / 焦点环绘制 / 多窗口隔离）详见 <a href="focus.html">3.6 焦点系统</a>。</p>
+
+<div class="chapter-nav">
+  <a href="declarative-ui.html">← 3.4 声明式 UI</a>
+  <a href="focus.html">下一节：3.6 焦点系统 →</a>
+</div>
+
+</div>
+</body>
+</html>

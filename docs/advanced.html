@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5 进阶主题 - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="css/style.css">
+<script id="nav-data" src="assets/nav.js" data-prefix="" data-current="advanced.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>5 进阶主题</h1>
+
+<p>本章深入引擎的六个高级方向，每节都附可直接运行的完整样例。按需直达：</p>
+
+<div class="card-grid">
+  <div class="card">
+    <h3><a href="advanced/luotiani.html">5.1 洛蒂动画引擎</a></h3>
+    <p>JSON 描述 → <code>prepare()</code> 烘焙 → 播放的完整链路：操作类型语义、easing / path 曲线增强、C++ 三档用法、C ABI CreateAnimation 全流程，以及烘焙、时间驱动、共享实例等机制与陷阱。</p>
+  </div>
+  <div class="card">
+    <h3><a href="advanced/multiwindow.html">5.2 多视口与多窗口</a></h3>
+    <p>一进程多 UI 实例：视图层次与能力位、单窗口双视口样例、双实例跨窗口通信样例、C ABI 配置结构，以及 K1–K8 隔离性保证。</p>
+  </div>
+  <div class="card">
+    <h3><a href="advanced/tools.html">5.3 非可视化控件</a></h3>
+    <p>HotReloader 热重载、DataContext 数据绑定、LayoutParser 自定义 handler、FocusManager 可编程焦点、ResourceProvider 资源链——五个功能控件的完整用法。</p>
+  </div>
+  <div class="card">
+    <h3><a href="advanced/cabi.html">5.4 纯 C ABI 程序化构建</a></h3>
+    <p>不依赖 JSON 布局与 Binding 层，直接用扁平属性接口搭建容器树、菜单与回调，并读取 UIEventData 事件负载的完整工程样例。</p>
+  </div>
+  <div class="card">
+    <h3><a href="advanced/scale.html">5.5 控件缩放（Scale）</a></h3>
+    <p>xScale / yScale 初始缩放系数：缩放模型与父子累积语义、C++ Binding 与 C ABI 创建参数、JSON "scale" 声明，以及与 LuotiAni 动画、Actor scaleType 的区别。</p>
+  </div>
+  <div class="card">
+    <h3><a href="advanced/canvas-scale.html">5.6 视口画布缩放（Canvas Scale）</a></h3>
+    <p>设计分辨率适配：off / fit / stretch 三种模式、基准画布与 JSON viewport 键、运行时切换（setEnumProperty / C ABI / Binding）、字号随复合重建与可见性过滤、坐标逆变换与字体缓存统计。</p>
+  </div>
+</div>
+
+<div class="chapter-nav">
+  <a href="controls/winframe.html">← 4.26 WinFrame</a>
+  <a href="advanced/luotiani.html">下一节：5.1 全面掌握洛蒂动画引擎 →</a>
+</div>
+
+</div>
+</body>
+</html>
+

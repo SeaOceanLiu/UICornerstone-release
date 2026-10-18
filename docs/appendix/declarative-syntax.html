@@ -1,0 +1,450 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6 声明式 UI 语法速查表 - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="../css/style.css">
+<script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="appendix/declarative-syntax.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>6 声明式 UI 语法速查表</h1>
+
+<h2>6.1 顶层结构</h2>
+
+<pre><code>{
+  "version": "1.0",
+  "viewport": { "width": 1920, "height": 1080, "scale-mode": "fit" },
+  "theme": { "fonts": {...}, "colors": {...} },
+  "controls": [ ... ],       // 控件树根数组（必填）
+  "dialogs":  [ ... ],       // 弹窗数组（可选）
+  "components": { ... },     // 可复用组件模板（可选）
+  "layouts": [ ... ]         // 组件实例化（可选）
+}</code></pre>
+
+<p><code>viewport</code> 键（可选）：声明显式基准画布与初始缩放模式，加载布局时生效
+（先于控件树解析，应用于当前实例的视口缩放状态）。</p>
+<table>
+<tr><th>键</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>scale-mode</code></td><td>string</td><td><code>off</code>（缺省，画布跟随窗口）/ <code>fit</code>（等比居中）/ <code>stretch</code>（拉伸铺满）</td></tr>
+<tr><td><code>width</code> / <code>height</code></td><td>number</td><td>基准画布尺寸（px）。缺省 = 跟随窗口（viewport）；仅记录于 off 模式，作为 fit/stretch 的适配基准</td></tr>
+<tr><td><code>background</code></td><td>color</td><td>画布底色（P0-74①；<code>#RRGGBB[AA]</code> 或 <code>{r,g,b,a}</code>）。主实例缺省不透明深色 (23,23,24,255)；<b>alpha=0 表示不填充/不清屏</b>（UI 透出底层游戏画面）；子视口缺省透明</td></tr>
+<tr><td><code>id</code></td><td>string</td><td>画布代码引用（P0-74⑥）：宿主经 <code>FindControl(id)</code> / <code>GetRoot</code> 定位根画布</td></tr>
+</table>
+
+<h2>6.2 控件通用键</h2>
+
+<p class="note">拖拽框架通用键（P0-94）：<code>draggable</code>（可拖源；tree/list/tab 自动元素载荷）/ <code>droppable</code>（可放置目标）/ <code>reorderable</code>（同控件内置换序，<strong>自含</strong>：无需 draggable/droppable；tree 换序·换父 / list 行 / tab 页）/ <code>drag-threshold</code>（默认 4）/ <code>drag-visual</code>（默认视觉）。详见 <a href="../advanced/drag-drop.html">5.7 拖拽框架</a>。事件（C ABI/Binding SetCallback）：<code>drag-start</code> / <code>drag-over</code> / <code>drop</code> / <code>drag-end</code> / <code>reordered</code> / <code>tab-reordered</code>；<code>drag-over</code> 内 <code>SetBool("drag-accept", 0)</code> 可拒绝。</p>
+
+<table>
+<tr><th>键</th><th>类型</th><th>说明</th></tr>
+<tr><td><code>children</code></td><td>array</td><td>子控件（容器类型）</td></tr>
+<tr><td><code>colors</code></td><td>object</td><td>状态色：<code>{"background":{"normal","hover","pressed","disabled"}}</code>；键含 background/border/text/text-shadow/控件特有键（progress、title-bar 等）。<b>P0-26</b>：按控件类型声明（态子集裁剪）——menu 为 background 三态 + text 三态，dialog/popup 仅 normal；完整矩阵见 <a href="properties.html">7.1.1</a></td></tr>
+<tr><td><code>events</code></td><td>object</td><td><code>{"onClick":"handlerName"}</code>，见 6.7</td></tr>
+<tr><td><code>id</code></td><td>string</td><td>全局唯一，FindControl 用</td></tr>
+<tr><td><code>margin</code></td><td>object</td><td><code>{"left","top","right","bottom"}</code></td></tr>
+<tr><td><code>rect</code></td><td>object</td><td><code>{"x","y","w","h"}</code>；支持百分比字符串 <code>"50%"</code></td></tr>
+<tr><td><code>scale</code></td><td>object</td><td><code>{"x":1.0,"y":1.0}</code>；内容按系数缩放，布局矩形不变</td></tr>
+<tr><td><code>type</code></td><td>string</td><td>必填。kebab 小写，全部 26 种：<code>label / button / image / animation / edit-box / combo-box / text-area / check-box / progress-bar / slider / scroll-bar / panel / win-frame / color-picker / popup / confirm-popup / dialog / menu-bar / numeric-up-down / splitter / tree-view / context-menu（控件级 context-menu 键，非独立控件）/ list-view / status-bar / tab-control / shape</code></td></tr>
+<tr><td><code>visible</code> / <code>enabled</code></td><td>bool</td><td>可见 / 启用</td></tr>
+</table>
+
+<h2>6.3 各控件专用键（全部 26 种）</h2>
+
+<h3>animation（LuotiAni 动画控件）</h3>
+<pre><code>{ "type":"animation", "id":"ani1x", "rect":{"x":1100,"y":80,"w":256,"h":256},
+  "path":"assets/animations/rotateBtn/rotateBtn.jsonc",     // 相对 exe 目录；w/h=0 → 画布尺寸
+  "scale":{"x":1,"y":1},                                    // 挂树后延迟 prepare，SetBool("playing") 启动
+  "playing":true }                                          // "playing":true 挂树后自动播放；运行时键 "animation" 与 "path" 同义（P0-24）</code></pre>
+
+<h3>button</h3>
+<pre><code>{ "type":"button", "id":"submit",
+  "rect":{"x":280,"y":140,"w":100,"h":35}, "caption":"Submit", "font-size":16,
+  "shadow":{"enabled":false,"offset":{"x":1,"y":1}},
+  "caption-label":{"caption":"Submit", "font":{"size":16}, "alignment":"center"},  // 可选：自定义内部标题 Label（对象；与属性键同键）
+  "colors":{"background":{"normal":"#4060A0FF","hover":"#5080C0FF","pressed":"#305090FF"},
+            "border":{"normal":"#6080C0FF"},"text":{"normal":"#FFFFFFFF"}},
+  "actors":{                                               // 状态图（四态图按钮：normal/hover/pressed/disabled）
+    "match-parent-rect":true,
+    "normal":"assets/images/normal.png",                   // 或 {"file":..., "scale-type":"fit-center"}
+    "hover":"assets/images/hover.png", "pressed":"assets/images/pressed.png" },
+  "luotiAni":"assets/animations/rotateBtn/rotateBtn.jsonc", // 内嵌动画：延迟 prepare；"playing":true 挂树后自动播放，缺省 SetBool("playing") 启动
+  "playing":true,
+  "events":{"onClick":"onSubmit"} }</code></pre>
+
+<h3>check-box</h3>
+<pre><code>{ "type":"check-box", "id":"agree",
+  "rect":{"x":240,"y":432,"w":180,"h":30}, "caption":"I agree", "font-size":14,
+  "check-state":"unchecked",                                 // unchecked/checked/indeterminate
+  "style":"classic",                                        // classic/cross/circle
+  "layout":"text-right",                                    // text-right/text-left
+  "tri-state":true, "size-ratio":1.0,
+  "colors":{"check-color":{"normal":"#66BB6AFF"},"cross-color":{"normal":"#FF5722FF"},"box-border-color":{"normal":"#53535AFF"}},
+  "events":{"onCheckChanged":"onAgreeChanged"} }</code></pre>
+
+<h3>color-picker</h3>
+<pre><code>{ "type":"color-picker", "id":"cp",
+  "rect":{"x":240,"y":498,"w":96,"h":24}, "color":"#FF6600",
+  "presets":["#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF"],
+  "presetLayout":{"cols":5,"rows":1}, "closed-swatch-size":16.0,
+  "closed-font-size":12, "closed-text-color":"#DBDBDB",
+  "popup-bg":"#3C3C41",
+  "events":{"onColorChanged":"onColor"} }</code></pre>
+
+<h3>combo-box</h3>
+<pre><code>{ "type":"combo-box", "id":"comboMain",
+  "rect":{"x":20,"y":56,"w":300,"h":32}, "font-size":16, "editable":false,
+  "placeholder":"Select a city...", "selected-index":0,
+  "arrow-width":20, "item-height":24, "max-visible-items":6, "cycle-enabled":true,
+  "items":[ { "label":"Beijing","value":"beijing" },
+            { "label":"Wuhan","value":"wuhan","disabled":true } ] }</code></pre>
+
+<h3>context-menu（右键菜单，控件级 context-menu 键）</h3>
+<pre><code>{ "type":"label", "id":"lbl", "rect":[10,10,120,24], "caption":"t",
+  "context-menu": { "items": [
+    { "caption":"Open", "shortcut":"Ctrl+O" }, { "type":"separator" },
+    { "caption":"Delete" } ] } }</code></pre>
+<p>控件级 <code>context-menu</code> 键：<code>items[]</code> 字段复用 MenuPanel 解析（caption / shortcut / type:separator / icon / leading 等）。</p>
+
+<h3>edit-box</h3>
+<pre><code>{ "type":"edit-box", "id":"nameEdit",
+  "rect":{"x":110,"y":20,"w":250,"h":30},
+  "placeholder":"Please input your name", "text":"", "editable":true,
+  "password-mode":false, "password-char":"●", "read-only":false,
+  "font":{"size":16},
+  "events":{"onTextChanged":"onNameChanged","onEnter":"onNameEnter"} }</code></pre>
+
+<h3>image（独立 Actor 图片控件）</h3>
+<pre><code>{ "type":"image", "id":"hero", "rect":{"x":20,"y":20,"w":128,"h":128},
+  "image":"assets/images/cross_up.png",          // 文件路径（相对 resourceRoot）
+  // 或内存资源："image-resource":"cross-down" / "providerName":"cross-down" / "resourceId":"cross-down"
+  "scale-type":"fit-center",                      // stretch(默认) / fit-center / center-crop / none
+  "match-parent-rect":false }                      // 强制使用父矩形</code></pre>
+
+<h3>label</h3>
+<pre><code>{ "type":"label", "id":"title", "rect":{"x":0,"y":52,"w":800,"h":40},
+  "caption":"标题", "alignment":"center",                   // left/center/right?（对齐）
+  "font":{"name":"HarmonyOS_Sans_SC_Regular","size":28,"style":["bold","italic"]},
+                                       // style: 单样式字符串或数组组合(normal/bold/italic/underline/strikethrough)
+  "colors":{"text":{"normal":"#FFFFFFFF"}},
+  "shadow":{"enabled":true,"offset":{"x":2,"y":2}},
+  "clickable":false,                                        // 可点击（onClick）
+  "line-height":28, "line-spacing-ratio":1.2 }</code></pre>
+
+<h3>list-view（含单列 ListBox 模式）</h3>
+<pre><code>{ "type":"list-view", "id":"lv", "rect":[30,60,420,240], "mode":"multi",
+  "multi-select":true, "selected-index":0, "row-height":28, "header-height":28,
+  "gridlines":true, "hover":true, "min-column-width":20, "cycle-navigation":true,
+  "sort-column":0, "sort-ascending":true,
+  "columns": [ { "title":"名称", "width":180, "sortable":true, "icon":"provider:icons/name" } ],
+  "rows": [ { "id":"f1", "cells":["main.cpp","2.1 KB"], "icon":"provider:icons/file",
+              "cellControls":[ { "col":1, "control":{ "type":"check-box" } } ] } ],
+  "events": { "onSelectionChanged":"onSel", "onColumnSort":"onSort" } }</code></pre>
+ <p>属性键：<code>mode</code>（multi/single）/ <code>multi-select</code> / <code>selected-index</code> / <code>row-height</code> / <code>header-height</code> / <code>gridlines</code> / <code>horizontal-gridlines</code> / <code>hover</code> / <code>min-column-width</code> / <code>cycle-navigation</code> / <code>sort-column</code> / <code>sort-ascending</code> / <code>font</code>（<code>{name,size,style}</code>）/ <code>font-size</code>；<code>columns[]</code>/<code>rows[]</code> 见样例（<code>c</code>… <code>columns.icon</code> / <code>rows.icon</code> / <code>rows.cellControls[]</code>）。</p>
+
+<h3>menu-bar（默认顶层独立；v1.1.1 起支持挂入布局容器作为普通子项）</h3>
+<p>顶层用法（缺省）：菜单栏全宽贴顶（挂到 Bench 时自动布置）。容器内用法（v1.1.1）：作为 panel / v-flow 子项时挂入即自动切换手动定位、参与引擎重排，无需 <code>manual-position</code>。</p>
+<pre><code>{ "type":"menu-bar", "id":"mainMenu",
+  "font":{"size":16}, "bar-height":32,
+  "menus":[ { "caption":"文件(F)", "shadow-radius":6,
+      "items":[ { "caption":"新建","shortcut":"Ctrl+N","events":{"onClick":"onMenuNew"} },
+                { "caption":"另存为","checked":false,
+                  "text-color":{"normal":"#DDDDDDFF","hover":"#FFFFFFFF"},
+                  "background-color":{"normal":"#2A2A2AFF","hover":"#3A3A3AFF"} },
+                { "caption":"-", "type":"separator" },
+                { "caption":"子菜单", "items":[ { "caption":"子项","events":{"onClick":"onSub"} } ] } ] } ] }</code></pre>
+<p class="note">menus 行键：<code>font</code>/<code>size</code>/<code>item-height-ratio</code>/<code>shadow-radius</code>（面板级）；items 元素另支持 <code>text-color</code>（字符串=normal / 四态对象）、<code>background-color</code>（字符串或 {normal,hover}）、<code>hover-background-color</code> 别名（P0-72④）。</p>
+
+<h3>numeric-up-down</h3>
+<pre><code>{ "type":"numeric-up-down", "id":"nud",
+  "rect":{"x":20,"y":78,"w":180,"h":32},
+  "value":50, "range":{"min":0,"max":100}, "step":1, "page-step":10, "decimals":0,
+  "placeholder":"0", "read-only":false }</code></pre>
+
+<h3>panel（容器 + 布局引擎）</h3>
+<pre><code>{ "type":"panel", "id":"formPanel",
+  "rect":{"x":50,"y":112,"w":400,"h":200},
+  "layout":{"type":"h-flow","gap":4,"padding":{"left":4,"top":4,"right":4,"bottom":4}},  // h-flow/v-flow/anchor/grid，见 6.5
+  "colors":{"border":{"normal":"#808080FF"}},
+  "children":[ { "type":"edit-box","id":"nameEdit","flow-weight":1,"rect":{"w":0,"h":30} },
+               { "type":"button","id":"submitBtn","caption":"OK","rect":{"w":100,"h":35} } ] }</code></pre>
+
+<h3>popup / confirm-popup / dialog（弹窗族）</h3>
+<pre><code>{ "type":"dialog", "id":"colorDlg",
+  "centered":true,                                        // 居中；rect 相对窗口/父容器
+  "rect":{"x":0,"y":0,"w":296,"h":440},
+  "confirm-button":{"text":"OK"},                          // 确认按钮文字
+  "cancel-button":{"text":"Cancel"},                       // 取消按钮文字（confirm-popup/dialog）
+  "events":{"onConfirm":"onDlgConfirm","onCancel":"onDlgCancel","onClose":"onDlgClose"} }</code></pre>
+
+<h3>progress-bar</h3>
+<pre><code>{ "type":"progress-bar", "id":"load",
+  "rect":{"x":440,"y":432,"w":200,"h":25},
+  "value":65, "range":{"min":0,"max":100},
+  "style":"horizontal",                                    // horizontal/vertical
+  "text-mode":"percent",                                    // none/percent/custom
+  "text":"Loading",                                         // P0-27c：等价 custom-text + 自动 text-mode=custom
+  "animation-speed":0.1,
+  "colors":{"progress":{"normal":"#4080C0FF"},"background":{"normal":"#303030FF"}} }</code></pre>
+
+<h3>scroll-bar</h3>
+<pre><code>{ "type":"scroll-bar", "id":"hScroll",
+  "rect":{"x":440,"y":472,"w":200,"h":16},
+  "orientation":"horizontal",                              // horizontal/vertical
+  "value":30, "range":{"min":0,"max":100},
+  "page-size":20, "step-size":5, "thickness":16 }</code></pre>
+
+<h3>shape（七种图元 + 多图元组合）</h3>
+<pre><code>{ "type":"shape", "id":"house", "rect":[40,300,150,130],
+  "colors":{ "background":"#324057FF" },
+  "primitives": [
+    { "shape":"round-rect", "rect":[10,50,130,75], "radius":6, "fill":"#34D399" },
+    { "shape":"polygon", "fill":"#EF4444",
+      "points":[ {"x":0,"y":52},{"x":75,"y":0},{"x":150,"y":52} ] } ] }</code></pre>
+<p>单图元键：<code>shape</code>（rect / filled-rect / round-rect / circle / ellipse / polyline / polygon）/ <code>fill</code> / <code>stroke</code> / <code>line-width</code> / <code>radius</code> / <code>ring-width</code> / <code>points[]</code>；多图元 <code>primitives[]</code> 非空时替代单图元（每项同上 + <code>rect:[x,y,w,h]</code> 本地坐标）。</p>
+
+<h3>slider</h3>
+<pre><code>{ "type":"slider", "id":"rSlider",
+  "rect":{"x":29,"y":224,"w":257,"h":20},
+  "range":{"min":0,"max":255}, "value":255, "step":1,
+  "style":"Horizontal",                                    // Horizontal/Vertical
+  "reverse":false, "show-value-label":true,
+  "colors":{"track":{"normal":"#3C3C3CFF"},"thumb":{"normal":"#888888FF"}} }</code></pre>
+
+<h3>splitter</h3>
+<pre><code>{ "type":"splitter", "id":"spl",
+  "rect":{"x":244,"y":60,"w":6,"h":200},
+  "orientation":"vertical",                                // horizontal/vertical
+  "first-linked":"panelFirst", "second-linked":"panelSecond",  // 两侧面板 id（引擎模式可省略）
+  "thickness":6, "ratio":0.4, "first-min":50, "second-min":50,
+  "colors":{"line":{"normal":"#808080FF"}} }</code></pre>
+<p>引擎模式（v1.1.1）：splitter 置于 flow 容器（v-flow/h-flow）children 内即自动分段布局——
+两侧面板为前后邻居、任意数量链式累计、拖拽两式（固定前段/后段改宽、引擎重排）、
+无面板即"手柄模式"（拖自身+上报 ratio）。详见 <a href="../controls/splitter.html#4-21-7">4.21.7</a>。</p>
+
+<h3>status-bar（VSCode 风格状态栏）</h3>
+<pre><code>{ "type":"status-bar", "id":"sb", "rect":[0,876,1400,24], "font-size":13,
+  "items":[ { "id":"branch","text":"main","icon":"provider:icons/git","menu":"#branchMenu" },
+            { "id":"enc","text":"UTF-8","align":"right" } ] }</code></pre>
+<p>属性键：<code>font-size</code> / <code>item-height</code> / <code>hover</code>（控件级悬停反馈色，P0-74⑤）；<code>items[]</code>：<code>id</code> / <code>text</code> / <code>align</code>（left/right）/ <code>icon</code> / <code>menu</code> / <code>onClick</code> / <code>text-color</code> / <code>background-color</code> / <code>hover-background-color</code>（独立悬停背景，P0-75）。</p>
+<p><strong>通用字体键（v1.1.1）</strong>：任意控件可声明 <code>font</code>（对象 <code>{name,size,style}</code>）或 <code>font-size</code>；未声明时沿<b>父控件链</b>继承最近显式字体。全链路未声明时回落主题字体。继承细节：仅当祖先显式声明 <code>font.name</code> 时才覆盖子控件默认字体名；父只声明 <code>font-size</code> 时子保留自身默认字体名（如 ListView 默认 <code>HarmonyOS_Sans_SC_Regular</code>）。</p>
+
+<table>
+<tr><th>控件</th><th>继承方式</th></tr>
+<tr><td>Label / EditBox / ComboBox / TextArea / ProgressBar / TreeView / TabControl / StatusBar / MenuBar / ListView</td><td>直接承接（<code>ApplyFontToControl</code> 直连 <code>setFontSize/setFont</code>）</td></tr>
+<tr><td>Button / CheckBox / WinFrame / ColorPicker / Dialog（含确认按钮）</td><td>内部 Label 子控件经父链透传继承（文字载体为内部 Label）</td></tr>
+<tr><td>Slider 数值标签</td><td>专用 <code>label-font</code> 键（<code>kLabelFont</code>），独立于通用继承——数值标签字号可单独调</td></tr>
+<tr><td>Panel / ScrollBar / Splitter / Shape / Image / Actor / LuotiAni / HandleControl / ContextMenu</td><td>无文字渲染，不涉及</td></tr>
+</table>
+
+<h3>tab-control（四方向选项卡）</h3>
+<pre><code>{ "type":"tab-control", "id":"tabs", "rect":[120,80,560,240], "position":"top",
+  "font-size":13, "currentIndex":0,
+  "tabs":[ { "title":"主页", "icon":"provider:icons/home", "page":{ "type":"panel" } } ],
+  "events": { "onTabChange":"onTab" } }</code></pre>
+<p class="note">页签配色 JSON 键（P0-92）：<code>tab-background</code> / <code>tab-hover-background</code> / <code>tab-selected-background</code> / <code>tab-indicator-color</code> / <code>tab-content-background</code>（单色 <code>#RRGGBB[AA]</code>）；<code>selected-text</code>（选中页签文字色）；<code>page-background</code>（字符串或四态对象，转发所有页）。</p>
+<p>属性键：<code>position</code>（top/bottom/left/right）/ <code>font-size</code> / <code>currentIndex</code>；<code>tabs[]</code>：<code>title</code> / <code>icon</code> / <code>page</code>（任意控件 JSON，递归解析，缺 rect 铺满内容区）。</p>
+
+<h3>text-area</h3>
+<pre><code>{ "type":"text-area", "id":"notes",
+  "rect":{"x":20,"y":432,"w":200,"h":80},
+  "placeholder":"Multi-line...", "text":"", "word-wrap":true, "auto-scroll":false,
+  "font":{"size":12},
+  "events":{"onTextChanged":"onNotesChanged"} }</code></pre>
+
+<h3>tree-view</h3>
+<pre><code>{ "type":"tree-view", "id":"tree",
+  "rect":{"x":20,"y":20,"w":240,"h":300},
+  "indent-width":16, "row-height":22, "cycle-navigation":false, "default-expand":true,
+  "items":[ { "id":"root","label":"Root","expanded":true,"userData":"extra",
+              "children":[ { "id":"child1","label":"Child 1" } ] } ],
+  "events":{"onSelect":"onTreeSelect","onExpand":"onTreeExpand","onCollapse":"onTreeCollapse"} }</code></pre>
+
+<h4>tree-view item 增强（二期）</h4>
+<pre><code>"items":[ {
+  "id":"cb1","label":"带勾选框的行",
+  "leadingControl":{ "type":"check-box", "check-state":"checked" },
+  "leadingGap":10
+}, {
+  "id":"img1","label":"带图标的行",
+  "leadingControl":{ "type":"image", "image":"assets/images/cross_down.png" },
+  "font":"maplemono-nf-cn-regular", "size":16
+} ]</code></pre>
+<ul>
+<li><code>hover-background-color</code>：节点独立悬停背景（P0-75；与专用 API 同语义，不影响常态背景）；控件级行悬停/选中底色另见 <code>hover</code> / <code>selected</code> 键（P0-74②）。</li>
+<li><code>leadingControl</code>：行前置控件容器（控件 JSON，复用 <code>type</code> + 控件属性，
+支持 check-box / image 等）。rect 由 TreeView 自适应（高 = 行内文字高度，宽按原始宽高比等比），
+文字缩进 = 无容器时文本缩进，文字被容器让位右移。</li>
+<li><code>leadingGap</code>：控件容器与文本之间的间隔（局部 px，默认 6）。</li>
+<li><code>font</code>：逐 Item 字体枚举（如 <code>maplemono-nf-cn-regular</code>），
+<code>size</code>：逐 Item 字号（0 = 继承 TreeView 级）。</li>
+<li><code>alignment</code>：槽位对齐（复用 Label 的 <code>alignment</code> 键与 9 宫格字符串，
+如 <code>"bottom-left"</code>；默认 <code>"mid-left"</code> 居中；水平分量忽略，槽位贴文本起点）。</li>
+</ul>
+<p>item 级属性的编程式操作（item-id 定位模式）见 <a href="capi.html#treeview-item">8.4.1</a>。</p>
+
+<h3>win-frame</h3>
+<pre><code>{ "type":"win-frame", "id":"win",
+  "rect":{"x":200,"y":100,"w":400,"h":300}, "title":"Submitted",
+  "edge-margin":4.0, "resizable":true,
+  "colors":{"title-bar":{"bg":{"normal":"#2A2A50FF"}},"title-text":{"normal":"#FFFFFFFF"}},
+  "children":[ { "type":"label","caption":"Form submitted!" } ] }</code></pre>
+
+<h3>6.3.1 视觉能力矩阵（按控件类型）</h3>
+<p>视觉键（<code>colors</code> / <code>shadow</code> / <code>font</code> / <code>font-size</code> / <code>border-visible</code>）按控件类型声明，<b>列出即"声明=实现"</b>。态子集含义：四态=normal/hover/pressed/disabled，三态=normal/hover/disabled，两态=normal/hover，单态=normal。</p>
+<table>
+<tr><th>控件组</th><th>colors 背景</th><th>colors 边框</th><th>colors 文字</th><th>text-shadow</th><th>shadow（开关+偏移）</th><th>font / font-size</th></tr>
+<tr><td>label / button / check-box</td><td>四态</td><td>四态</td><td>四态</td><td>四态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>win-frame</td><td>两态（作用于 ClientPanel）</td><td>两态（作用于整体窗框）</td><td>四态</td><td>四态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>edit-box / text-area / combo-box / numeric-up-down</td><td>三态</td><td>三态</td><td>单态</td><td>⊘</td><td>⊘</td><td>✓ / ✓</td></tr>
+<tr><td>list-view / tree-view（控件级）</td><td>三态</td><td>三态</td><td>⊘</td><td>⊘</td><td>⊘</td><td>✓ / ✓</td></tr>
+<tr><td>list-view / tree-view（item 级）</td><td>四态</td><td>四态</td><td>四态</td><td>四态</td><td>✓（item）</td><td>item-font / item-font-size</td></tr>
+<tr><td>progress-bar</td><td>三态</td><td>三态</td><td>三态</td><td>三态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>status-bar / tab-control</td><td>四态</td><td>四态</td><td>四态</td><td>四态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>tab-control 页 panel</td><td><code>page-background</code> 四态（转发所有页）</td><td>⊘</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>slider</td><td>四态</td><td>四态</td><td>四态（滑块状态传递 valueLabel）</td><td>四态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>color-picker（闭合态）</td><td>四态（底板；swatch 色块恒为当前色）</td><td>四态</td><td>四态</td><td>四态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>menu-bar</td><td>三态</td><td>三态</td><td>三态</td><td>三态</td><td>✓</td><td>✓ / ✓</td></tr>
+<tr><td>panel / shape / image / animation</td><td>三态</td><td>三态</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td></tr>
+<tr><td>splitter</td><td>三态（驱动把手线色）</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td></tr>
+<tr><td>scroll-bar</td><td>四态</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td></tr>
+<tr><td>dialog / popup / confirm-popup / context-menu</td><td>两态</td><td>两态</td><td>⊘</td><td>⊘</td><td>⊘</td><td>⊘</td></tr>
+</table>
+<p class="note">说明：① 输入控件文字仅 normal（输入框文字态语义牵强）、无阴影；② list/tree 控件级无文字与阴影（表头亦走 item 样式）；<b>item 级键</b>（item-id 定位）：<code>item-background</code> / <code>item-border</code> / <code>item-text</code> / <code>item-text-shadow</code>（四态对象，text-shadow 兼容单色字符串）+ <code>item-shadow</code> / <code>item-shadow-offset-x</code> / <code>item-shadow-offset-y</code> / <code>item-border-visible</code> / <code>item-disabled</code>；样式优先级 cell &gt; item（行）&gt; 控件级；③ <code>page-background</code> 转发至所有页 panel（页显式自设 <code>colors.background</code> 优先）；④ win-frame 背景作用于内容区 ClientPanel，边框作用于整体窗框；⑤ pressed 态对非交互控件（image/animation）与三态/两态控件不适用；⑥ 运行时可用的额外态（如输入控件 pressed）保留兼容但不声明；⑦ splitter：<code>colors.background</code> 三态驱动把手线色，<code>line</code> / <code>line-hover</code> / <code>line-drag</code> 专用键优先（显式专用 &gt; 通用组）；⑧ scroll-bar：厚度经 <code>thickness</code>（垂直→width / 水平→height），轨道/滑块色键 <code>track</code> / <code>thumb</code> / <code>thumb-hover</code> / <code>thumb-pressed</code> 经属性通道；⑨ <code>font</code> 支持 string 通道（<code>SetString/GetString("font")</code>，Get 返回字体枚举名）。</p>
+<h2>6.4 颜色格式</h2>
+
+<pre><code>"#RGB" | "#RRGGBB" | "#RRGGBBAA" | { "r":255, "g":0, "b":0, "a":128 }</code></pre>
+
+<h2>6.5 布局引擎</h2>
+
+<h3>h-flow / v-flow</h3>
+<pre><code>"layout": { "type": "h-flow", "gap": 4,
+             "padding": { "left": 4, "top": 4, "right": 4, "bottom": 4 } }
+// 子控件：{ ..., "flow-weight": 1 }  弹性分配；0/缺省=固定</code></pre>
+
+<h3>anchor</h3>
+<pre><code>"layout": { "type": "anchor" }
+// 子控件：
+{ ..., "anchor": "top-right",
+  "anchorOffset": { "left": 10, "top": 10, "right": 0, "bottom": 0 } }
+// 锚点值（小写连字符）：
+//   top-left top-center top-right / mid-left center mid-right
+//   bottom-left bottom-center bottom-right
+//   top-stretch bottom-stretch left-stretch right-stretch fill
+// 含义见下方「anchor 取值含义」表
+// 运行期（P0-59）：SetEnum("layout", "absolute|h-flow|v-flow|anchor|grid") 切换容器布局模式
+//   （absolute/空串=清除引擎回到自由布局；gap/padding 默认 0）；GetEnum("layout") 读回（无引擎返回 "absolute"）。
+// 子控件锚点运行期读写：先 SetString(parent, "child-id", 子控件id)，
+//   再 SetEnum(parent,"anchor","top-right") / SetFloat(parent,"anchor-offset-x",12)；
+//   GetEnum("anchor")/GetFloat("anchor-offset-x/y") 读回（未设置返回 0）。
+// 根级锚定（P0-61）：GetRoot(inst)/Binding Root() 取根句柄后，同样经 child-id + anchor 属性链
+//   锚定顶层控件到设计画布边界（SetCanvasSize 声明的设计画布尺寸，缺省=窗口视口；缩放/窗口变化稳定）；
+//   未锚定叠加物保持自由布局（P0-60 稀疏）；SetCanvasSize 全模式即时应用并触发根重排。
+// 即时生效与稀疏语义（P0-60）：运行期改 anchor/anchor-offset-x/y 立即重排；
+//   anchor 布局中未显式声明锚点（含仅设偏移）的子控件保持自身 rect，不参与锚点管理（自由布局）。
+</code></pre>
+
+<h3>anchor 取值含义</h3>
+<table>
+<tr><th>取值（小写连字符）</th><th>含义</th></tr>
+<tr><td><code>top-left</code> / <code>top-center</code> / <code>top-right</code></td><td>靠顶部：左/中/右对齐（<code>top-left/top-right</code> 用 <code>offset.left+top</code> / <code>offset.right+top</code> 定距）</td></tr>
+<tr><td><code>mid-left</code> / <code>center</code> / <code>mid-right</code></td><td>垂直居中：左/中/右对齐（<code>center</code> 居中后 <code>offset.left+top</code> 额外位移）</td></tr>
+<tr><td><code>bottom-left</code> / <code>bottom-center</code> / <code>bottom-right</code></td><td>靠底部：左/中/右对齐（<code>offset.bottom</code> 定底距）</td></tr>
+<tr><td><code>top-stretch</code></td><td>顶部拉伸：宽度填满容器（扣 <code>offset.left+right</code>），顶部固定</td></tr>
+<tr><td><code>bottom-stretch</code></td><td>底部拉伸：宽度填满容器，底部固定</td></tr>
+<tr><td><code>left-stretch</code></td><td>左侧拉伸：高度填满容器（扣 <code>offset.top+bottom</code>），左侧固定</td></tr>
+<tr><td><code>right-stretch</code></td><td>右侧拉伸：高度填满容器，右侧固定</td></tr>
+<tr><td><code>fill</code></td><td>填满容器内边距区域（宽高均填满，扣四边 <code>offset</code> 与布局 <code>padding</code>）</td></tr>
+</table>
+
+<h3>grid</h3>
+<pre><code>"layout": { "type": "grid",
+             "columns": ["1fr", "2fr", "100px"],
+             "rows": ["30px", "1fr", "auto"] }
+// 子控件：{ ..., "grid": { "row":0, "col":1, "rowSpan":1, "colSpan":1 } }
+// 尺寸：Fixed "100px" / Flex "1fr" / Auto "auto"</code></pre>
+
+<h2>6.6 事件引用与注册</h2>
+
+<pre><code>// C ABI
+UICornerstone_RegisterAction(g_inst, "handleSubmit", cb, NULL);
+
+// C++ Binding
+ui->RegisterAction("handleSubmit", [](Control ctl){ /* ... */ });
+
+// 核心库 LayoutParser
+parser.registerHandler("handleSubmit", [](shared_ptr&lt;Control&gt; ctl){ /* ... */ });</code></pre>
+
+<h2>6.7 事件键名 → 控件对照</h2>
+
+<table>
+<tr><th>JSON 事件键</th><th>适用控件</th></tr>
+<tr><td><code>onCheckChanged</code></td><td>CheckBox</td></tr>
+<tr><td><code>onClick</code></td><td>Button / Label（clickable）/ MenuItem</td></tr>
+<tr><td><code>onClose</code> / <code>onConfirm</code> / <code>onCancel</code></td><td>WinFrame / Dialog</td></tr>
+<tr><td><code>onColorChanged</code></td><td>ColorPicker</td></tr>
+<tr><td><code>onPositionChanged</code></td><td>ScrollBar</td></tr>
+<tr><td><code>onSelectionChanged</code></td><td>ComboBox</td></tr>
+<tr><td><code>onSplitterMoved</code></td><td>Splitter</td></tr>
+<tr><td><code>onTextChanged</code> / <code>onEnter</code></td><td>EditBox / TextArea</td></tr>
+<tr><td><code>onValueChanged</code></td><td>ProgressBar / Slider / NumericUpDown</td></tr>
+</table>
+
+<h2>6.8 主题</h2>
+
+<pre><code>"theme": {
+  "fonts": { "default": { "name": "HarmonyOS_Sans_SC_Regular", "size": 16 },
+             "button": { "size": 16 } },
+  "colors": {
+    "background": "#282828FF", "text": "#FFFFFFFF", "border": "#808080FF",
+    "button": { "bg": {"normal":"#3C3C3CFF","hover":"#4C4C4CFF","pressed":"#2C2C2CFF"},
+                "border": {...}, "text": {...} },
+    "checkbox": { "check-color": "#66BB6AFF", "cross-color": "#FF5722FF", "box-border-color": "#53535AFF" },
+    "progressbar": { "progress": "#66BB6AFF", "track": "#333333FF" }
+  }
+}</code></pre>
+
+<p>类别：<code>button / label / editbox / textarea / checkbox / progressbar / panel / scrollbar / menubar</code>；应用顺序：Theme 默认 → 公共 colors → 控件专用颜色 → 控件专用字体。</p>
+
+<h2>6.9 组件与实例化</h2>
+
+<pre><code>"components": {
+  "SearchBar": {
+    "props": { "placeholder": "Search...", "btnText": "Go" },
+    "template": {
+      "type": "panel", "layout": { "type": "h-flow", "gap": 4 },
+      "children": [
+        { "type": "edit-box", "id": "$search", "rect": { "w": 200, "h": 30 },
+          "placeholder": "$props.placeholder" },
+        { "type": "button", "id": "$go", "rect": { "w": 60, "h": 30 },
+          "caption": "$props.btnText", "events": { "onClick": "onSearch" } }
+      ]
+    }
+  }
+},
+"layouts": [
+  { "use": "SearchBar", "id": "topSearch",
+    "props": { "placeholder": "输入关键词", "btnText": "搜索" },
+    "rect": { "x": 20, "y": 20, "w": 300, "h": 40 } }
+]</code></pre>
+
+<h2>6.10 热加载</h2>
+
+<pre><code>HotReloader reloader("layouts/main.json", rebuildCallback);
+reloader.poll();                 // 每帧调用（默认 30 帧检查一次）
+reloader.setPollInterval(15);    // 调整间隔
+reloader.reload();               // 手动触发</code></pre>
+
+<div class="chapter-nav">
+  <a href="../integration.html">← 5.8 嵌入到你的逻辑回路中</a>
+  <a href="properties.html">下一节：7 属性速查表 →</a>
+</div>
+
+</div>
+</body>
+</html>

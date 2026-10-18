@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="assets/UICornerstone_Logo.svg">
+<link rel="icon" type="image/png" sizes="256x256" href="assets/UICornerstone_Logo_256.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3 从基础入门 - UICornerstone v1.1.0 用户手册</title>
+<link rel="stylesheet" href="css/style.css">
+<script id="nav-data" src="assets/nav.js" data-prefix="" data-current="basics.html"></script>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="content">
+
+<h1>3 从基础入门</h1>
+
+<p>UICornerstone 的一切都是<strong>控件（Control）</strong>：按钮、标签、输入框……你创建它们，用<strong>属性（Property）</strong>读写它们的表现（<code>SetString</code>/<code>GetInt</code> 等），用<strong>事件回调</strong>响应交互（点击、文本变化），由核心引擎统一完成布局、样式渲染与对象生命周期管理——你不需要关心任何平台细节。</p>
+
+<p>本库提供 <strong>C ABI</strong>（<code>core/</code> 与 <code>include/</code>）与 <strong>C++ Binding</strong>（<code>binding/</code>）两层接口：C++ Binding 是推荐的上手方式，把 C ABI 包装为现代 C++ 接口并纯动态加载核心 DLL，无静态链接耦合；主循环支持 <strong>Hosted</strong>（UI 托管）与 <strong>Embedded</strong>（嵌入你自己的游戏/工具循环）两种模式；除了代码编程，还可用 JSON 编写<strong>声明式 UI</strong>。</p>
+
+<h2>本章你能学到什么</h2>
+
+<ul>
+  <li><a href="cpp-binding.html">3.1 使用 C++ Binding 搭建</a>：CMake 集成、核心头文件，写一个最小可运行的应用；</li>
+  <li><a href="first-app.html">3.2 创建你的第 1 个 UICornerstone 应用</a>：完整例子——控件工厂、属性读写、回调，以及 Hosted/Embedded 两种主循环；</li>
+  <li><a href="property-system.html">3.3 属性系统</a>：Set/Get 背后的统一属性模型，理解"属性驱动"的精髓；</li>
+  <li><a href="declarative-ui.html">3.4 声明式 UI</a>：用 JSON 描述界面，少写代码（推荐）；</li>
+  <li><a href="events-focus.html">3.5 事件</a>：回调注册与 <code>Event</code> 具名访问器；</li>
+  <li><a href="focus.html">3.6 焦点系统</a>：Tab 焦点导航与焦点样式；</li>
+  <li><a href="luotiani.html">3.7 洛蒂动画</a>：加载 Lottie 动画并绑定到控件。</li>
+</ul>
+
+<p>完成本章后，你将能够独立搭建环境、创建窗口与控件、响应交互，并选择适合自己项目的主循环模式——随后进入 <a href="controls/index.html">第 4 章 深入控件</a> 逐个掌握全部控件。</p>
+
+<div class="chapter-nav">
+  <a href="quickstart.html">← 2 快速起步</a>
+  <a href="cpp-binding.html">下一节：3.1 使用 C++ Binding 搭建 →</a>
+</div>
+
+</div>
+</body>
+</html>
