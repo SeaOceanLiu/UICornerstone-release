@@ -111,6 +111,7 @@
 <tr><td><code>UICornerstone_CreateTreeView(inst, x, y, w, h, xScale, yScale)</code></td><td>TreeView（节点经 <code>SetString("items", json)</code> 填充，见 7 TreeView）</td></tr>
 <tr><td><code>UICornerstone_CreateWinFrame(inst, title, x, y, w, h, xScale, yScale)</code></td><td>WinFrame</td></tr>
 <tr><td><code>UICornerstone_MenuBarAddMenu / MenuPanelAddItem / MenuPanelAddSeparator / MenuPanelRemoveItem / MenuItemSetSubMenu</code></td><td>菜单组装；<code>MenuPanelRemoveItem</code>（P0-98②）完整移除（子菜单链关闭 + id 注销 + 重算），移除后句柄失效</td></tr>
+<tr><td><code>UICornerstone_ContextMenuAddItemEx(inst, menu, caption, shortcut)</code></td><td>右键菜单：创建条目并**返回条目句柄**（NULL=失败；旧 <code>ContextMenuAddItem</code> 返回 0/1 保留）——随后 <code>SetCallback(item, "click", ...)</code> 绑定动作（P0-105；延迟一帧语义）</td></tr>
 <tr><td><code>UICornerstone_MenuBarRemoveMenu(inst, bar, caption)</code></td><td>菜单移除（1=移除 0=未找到；面板保活可再挂载）</td></tr>
 </table>
 
@@ -130,6 +131,7 @@
 <tr><td><code>TabMovePage(inst, tab, from, to)</code></td><td>页序调整（P0-91；完整迁移 title/page/leadingControl，currentIndex 重映射；1=移动 0=越界/同位）</td></tr>
 <tr><td><code>TabGetItemRect(inst, tab, index, &amp;x,&amp;y,&amp;w,&amp;h)</code></td><td>页签项矩形（P0-91；<b>TabControl 局部逻辑坐标</b>；1=成功 0=越界）</td></tr>
 <tr><td><code>TreeViewMoveNode(inst, tree, id, newParentId, index)</code></td><td>节点迁移（P0-94；换序/换父，完整子树，index&lt;0=追加）</td></tr>
+<tr><td><code>TreeViewGetNodeAt(inst, tree, x, y, buf, cap)</code></td><td>窗口坐标→行节点 id（P0-107：内容区扣除滚动条；空白/滚动条/越界返回 0；snprintf 式返回所需长度；纯查询不改选中）</td></tr>
 <tr><td><code>ListViewMoveRow(inst, lv, from, to)</code></td><td>行换序（P0-94；from→to 最终索引）</td></tr>
 <tr><td>拖拽框架（P0-94；教程见 <a href="../advanced/drag-drop.html">5.7</a>）</td><td>属性 <code>draggable</code>/<code>droppable</code>/<code>reorderable</code>/<code>drag-threshold</code>/<code>drag-visual</code>（通用 SetBool/SetFloat；<code>reorderable</code> 自含：无需 draggable/droppable）；事件 <code>drag-start</code>/<code>drag-over</code>/<code>drop</code>/<code>drag-end</code>/<code>reordered</code>/<code>tab-reordered</code>（SetCallback）；载荷 <code>UIEventData.data.drag.{payload,hint,dropped}</code>（<code>UIDragPayload</code>/<code>UIDropHint</code>，kind 见 <code>UI_DRAG_KIND_*</code>/<code>UI_DROP_HINT_*</code>）；<code>drag-over</code> 内 <code>SetBool("drag-accept",0)</code> 拒绝；<code>drag-active</code> 只读</td></tr>
 <tr><td><code>ShapeSetPoints / ShapeMapToDrawPoint / ShapeAddPrimitive / ShapeSetPrimitiveColor / ShapeSetPrimitiveFloat / ShapeSetPrimitivePoints / ShapeClearPrimitives</code></td><td>Shape 顶点/映射/多图元</td></tr>

@@ -394,6 +394,8 @@ UICORNERSTONE_API UIControlHandle UICornerstone_CreateWinFrame(UIInstance instan
 // type: 0=Normal, 1=Separator, 2=SubMenu
 // MenuItem 的 caption/checked/shortcut/click 走统一属性系统
 // （SetString/SetBool/SetCallback，事件名 "click"）
+// P0-103：click 回调延迟一帧执行（下一次 ProcessEvents 起始 flush）——保证
+// 宿主在回调内打开模态对话框时，菜单关闭已先行呈现（关链本身仍同步）
 UICORNERSTONE_API UIControlHandle UICornerstone_CreateMenuBar(UIInstance instance,
     float x, float y, float w, float h, float xScale, float yScale);
 UICORNERSTONE_API UIControlHandle UICornerstone_CreateMenuPanel(UIInstance instance, float xScale, float yScale);
@@ -470,6 +472,11 @@ UICORNERSTONE_API void UICornerstone_TreeViewClearItems(UIInstance instance, UIC
 // 读取选中节点 id（无选中返回 0；有选中将 id 拷入 outBuf 并返回 1）
 UICORNERSTONE_API int UICornerstone_TreeViewGetSelectedId(UIInstance instance,
     UIControlHandle tree, char* outBuf, int outSize);
+/* P0-107：按窗口坐标查行节点 id（内容区扣除滚动条；行间空白/滚动条区域/越界返回 0）。
+   纯查询（不改选中/悬停/展开）。缓冲语义（snprintf 式）：返回所需长度（含 NUL，≥1）；
+   outBuf=NULL 或 outSize<=0 时仅查询长度；返回值 > outSize-1 表示已截断（宿主应先查后取）。 */
+UICORNERSTONE_API int UICornerstone_TreeViewGetNodeAt(UIInstance instance, UIControlHandle tree,
+    float x, float y, char* outBuf, int outSize);
 
 /* ============ EditBox / TextArea 文本操作 ============ */
 // 选区与剪贴板命令式操作（对应 EditBox/TextArea 方法）。返回 1 成功 / 0 失败（非文本控件）。
@@ -684,6 +691,10 @@ UICORNERSTONE_API UIControlHandle UICornerstone_CreateContextMenu(UIInstance ins
     float x, float y, float w, float h, float xScale, float yScale);
 UICORNERSTONE_API int UICornerstone_ContextMenuAddItem(UIInstance instance, UIControlHandle menu,
     const char* caption, const char* shortcut);
+// P0-105：创建右键菜单条目并返回条目句柄（失败 NULL；条目由菜单面板持有、句柄有效）。
+// 宿主随后可 SetCallback(item, "click", ...) 绑定动作（P0-98 统一通路 + P0-103 延迟一帧语义）。
+UICORNERSTONE_API UIControlHandle UICornerstone_ContextMenuAddItemEx(UIInstance instance,
+    UIControlHandle menu, const char* caption, const char* shortcut);
 UICORNERSTONE_API int UICornerstone_ContextMenuAddSeparator(UIInstance instance, UIControlHandle menu);
 UICORNERSTONE_API int UICornerstone_ContextMenuShow(UIInstance instance, UIControlHandle menu, float x, float y);
 UICORNERSTONE_API int UICornerstone_ContextMenuClose(UIInstance instance, UIControlHandle menu);
