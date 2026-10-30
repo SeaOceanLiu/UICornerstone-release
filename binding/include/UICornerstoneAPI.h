@@ -831,7 +831,10 @@ UICORNERSTONE_API int UICornerstone_GetStateColor( UIInstance instance, UIContro
 UICORNERSTONE_API int UICornerstone_GetBool(     UIInstance instance, UIControlHandle ctl, const char* prop, int*           out);
 UICORNERSTONE_API int UICornerstone_GetInt(     UIInstance instance, UIControlHandle ctl, const char* prop, int*           out);
 UICORNERSTONE_API int UICornerstone_GetFloat(   UIInstance instance, UIControlHandle ctl, const char* prop, float*         out);
-UICORNERSTONE_API int UICornerstone_GetString(  UIInstance instance, UIControlHandle ctl, const char* prop, char* out, int maxLen);
+// P0-108：返回 1 成功（含空串，此时 *outLen=0）；非法句柄/属性不支持/outLen==NULL → 0。
+// outLen = 完整字节长度（不含 NUL，可大于 cap-1）；out 非空且 cap>0 时拷贝 min(cap-1,len)+NUL；
+// out=NULL 或 cap<=0 仅查长度。文本为 NUL 终止语义（内嵌 NUL 不支持；len==INT_MAX 拒绝）。
+UICORNERSTONE_API int UICornerstone_GetString(  UIInstance instance, UIControlHandle ctl, const char* prop, char* out, int cap, int* outLen);
 UICORNERSTONE_API int UICornerstone_GetEnum(    UIInstance instance, UIControlHandle ctl, const char* prop, char* out, int maxLen);
 
 // 读取指针属性。out 返回属性值。返回 1 成功，0 属性不识别

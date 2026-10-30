@@ -294,10 +294,11 @@ lbl.SetPtr(PropertyNames::kPropContextMenu, menu.Handle());</code></pre>
 <tr><td>select / expand / collapse</td><td><code>IsSelect()</code> / <code>IsExpand()</code> / <code>IsCollapse()</code> → <code>GetNodeId()</code> / <code>GetNodeUserData()</code></td></tr>
 <tr><td>selection-changed</td><td><code>IsSelectionChanged()</code> → <code>GetSelectedIndex()</code> / <code>GetSelectedValue()</code></td></tr>
 <tr><td>text-changed</td><td><code>IsTextChanged()</code> → <code>GetTextChanged()</code>（string）</td></tr>
+<tr><td>expression-changed</td><td><code>IsExpressionChanged()</code> → <code>GetExpression()</code>（string，ColorPicker 表达式）</td></tr>
 <tr><td>value-changed</td><td><code>IsValueChanged()</code> → <code>GetValueChanged()</code>（float）/ <code>GetValueChangedDouble()</code>（double）</td></tr>
 </table>
 
-<p>注意：<code>IsColorChanged()</code> 恒为 false（ColorPicker 用轮询读取）；通用原始访问：
+<p>注意：<code>IsColorChanged()</code> 在 <code>color-changed</code> 事件中为真，<code>GetChangedColor()</code> 读取该事件载荷颜色（实测验证）；通用原始访问：
 <code>GetNameRaw()</code> / <code>GetIntVal()</code> / <code>GetFloatVal()</code> / <code>GetDoubleVal()</code> /
 <code>GetStrVal()</code> / <code>GetPtrVal()</code>；<code>GetName()</code> 返回 <code>std::string</code> 事件名，<code>GetChangedColor()</code> 仅在事件携带颜色时有效。</p>
 

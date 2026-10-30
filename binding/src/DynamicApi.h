@@ -253,7 +253,7 @@ struct Api {
     int (*fnGetBool)(UIInstance, UIControlHandle, const char*, int*) = nullptr;
     int (*fnGetInt)(UIInstance, UIControlHandle, const char*, int*) = nullptr;
     int (*fnGetFloat)(UIInstance, UIControlHandle, const char*, float*) = nullptr;
-    int (*fnGetString)(UIInstance, UIControlHandle, const char*, char*, int) = nullptr;
+    int (*fnGetString)(UIInstance, UIControlHandle, const char*, char*, int, int*) = nullptr;   // P0-108：长度查询（cap,outLen）
     int (*fnGetEnum)(UIInstance, UIControlHandle, const char*, char*, int) = nullptr;
     int (*fnGetPtr)(UIInstance, UIControlHandle, const char*, void**) = nullptr;
     int (*fnGetControlType)(UIInstance, UIControlHandle, char*, int) = nullptr;

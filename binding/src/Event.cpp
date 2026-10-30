@@ -27,6 +27,8 @@ int Event::GetCheckState() const { return m_raw->data.intVal; }
 
 // ColorPicker 经 fireCCallback(kEventColorChanged, Color) 触发，Binding 可直接取色
 bool Event::IsColorChanged() const { return GetName() == PropertyNames::kEventColorChanged; }
+bool Event::IsExpressionChanged() const { return GetName() == PropertyNames::kEventExpressionChanged; }
+std::string Event::GetExpression() const { return m_raw->data.strVal ? m_raw->data.strVal : ""; }
 UIColor Event::GetChangedColor() const {
     UIColor c{m_raw->data.color.r, m_raw->data.color.g, m_raw->data.color.b, m_raw->data.color.a};
     return c;

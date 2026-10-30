@@ -27,6 +27,8 @@ public:
     int GetCheckState() const;
     bool IsColorChanged() const;                // "color-changed"（ColorPicker 经 C 回调触发）
     UIColor GetChangedColor() const;
+    bool IsExpressionChanged() const;           // "expression-changed"（ColorPicker）：strVal
+    std::string GetExpression() const;
     bool IsPositionChanged() const;             // "position-changed"：floatVal
     float GetPositionChanged() const;
     bool IsMoved() const;                       // "moved"：floatVal
