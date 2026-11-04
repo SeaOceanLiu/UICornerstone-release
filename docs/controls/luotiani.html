@@ -17,6 +17,11 @@
 
 <p>LuotiAni 是播放关键帧动画的控件：JSON 描述动画（见 <a href="../luotiani.html">3.7 洛蒂动画</a>），运行时<strong>烘焙为帧贴图</strong>，播放按毫秒查表。多实例共享烘焙帧数据。继承链：<code>LuotiAni → Material → ControlImpl → Control</code>。</p>
 
+<figure>
+  <img src="../assets/controls/luotiani-overview.png" alt="LuotiAni 动画预览" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>关键帧动画效果预览（APNG，透明背景）。</figcaption>
+</figure>
+
 <h2>4.13.1 控件的创建</h2>
 
 <pre><code>// C++（构造不加载）

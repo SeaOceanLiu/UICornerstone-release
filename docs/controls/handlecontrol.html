@@ -17,6 +17,11 @@
 
 <p>HandleControl 是编辑器类控件的选择框：附着于一个目标控件，提供<strong>8 个缩放手柄（NW/N/NE/E/SE/S/SW/W）+ 中心移动手柄 + 虚线选择框</strong>，拖拽实时修改目标的 <code>setRect()</code>。非拖拽时事件穿透给目标；目标被销毁时自动隐藏。继承链：<code>HandleControl → ControlImpl → Control</code>。</p>
 
+<figure>
+  <img src="../assets/controls/handlecontrol-overview.png" alt="HandleControl 八个缩放手柄" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>目标控件被虚线选择框和八个缩放手柄包围。</figcaption>
+</figure>
+
 <h2>4.10.1 控件的创建</h2>
 
 <pre><code>// C++（无参构造，需随后 setTarget）

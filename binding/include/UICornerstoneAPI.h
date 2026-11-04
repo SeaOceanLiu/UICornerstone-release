@@ -356,6 +356,16 @@ UICORNERSTONE_API int      UICornerstone_Debug_SetMousePosition(UIInstance insta
 UICORNERSTONE_API int      UICornerstone_Debug_ClearMousePosition(UIInstance instance);
 
 /* ============ 布局系统 ============ */
+/* ============ CR20261102001/002/003：CSS-like 主题 / content-padding / 响应式 ============ */
+UICORNERSTONE_API int UICornerstone_ApplyTheme(UIInstance instance, const char* themeJson);
+UICORNERSTONE_API int UICornerstone_SetThemeVariant(UIInstance instance, const char* name);
+UICORNERSTONE_API int UICornerstone_GetThemeVariant(UIInstance instance, char* out, int cap, int* outLen);
+UICORNERSTONE_API int UICornerstone_ClearThemeOverrides(UIInstance instance, UIControlHandle ctl);
+UICORNERSTONE_API int UICornerstone_RefreshResponsiveTheme(UIInstance instance, float viewportWidth, float viewportHeight);
+UICORNERSTONE_API int UICornerstone_GetActiveMedia(UIInstance instance, char* out, int cap, int* outLen);
+UICORNERSTONE_API int UICornerstone_SetContentPadding(UIInstance instance, UIControlHandle ctl, float left, float top, float right, float bottom);
+UICORNERSTONE_API int UICornerstone_GetContentPadding(UIInstance instance, UIControlHandle ctl, float* left, float* top, float* right, float* bottom);
+
 UICORNERSTONE_API int               UICornerstone_LoadLayout(UIInstance instance, const char* jsonContent);
 UICORNERSTONE_API int               UICornerstone_LoadLayoutFromFile(UIInstance instance, const char* filePath);
 UICORNERSTONE_API UIControlHandle   UICornerstone_FindControl(UIInstance instance, const char* id);

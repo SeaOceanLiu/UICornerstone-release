@@ -17,6 +17,11 @@
 
 <p>三层弹窗族：<code>Popup</code>（无按钮）→ <code>ConfirmPopup</code>（+确定按钮，Enter 确认）→ <code>Dialog</code>（+取消按钮，ESC/外部点击走取消）。三者均为<strong>非模态</strong>（事件驱动，不阻塞主循环）。继承链：<code>Dialog → ConfirmPopup → Popup → Panel</code>。</p>
 
+<figure>
+  <img src="../assets/controls/dialog-overview.png" alt="Dialog 内容与确认/取消按钮" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>Dialog 的内容区、确认和取消按钮。</figcaption>
+</figure>
+
 <h2>4.8.1 控件的创建</h2>
 
 <pre><code>// C++

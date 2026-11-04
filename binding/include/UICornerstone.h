@@ -122,6 +122,13 @@ public:
     // ── 布局 ──
     bool LoadLayout(const std::string& jsonContent);
     bool LoadLayoutFromFile(const std::string& filePath);
+    // CR20261102001/003：CSS-like 主题 / 响应式
+    bool ApplyTheme(const std::string& themeJson);
+    bool SetThemeVariant(const std::string& name);
+    std::string GetThemeVariant() const;
+    bool ClearThemeOverrides(Control& ctl);
+    bool RefreshResponsiveTheme(float viewportWidth = 0.0f, float viewportHeight = 0.0f);
+    std::string GetActiveMedia() const;
     Control FindControl(const std::string& id);
     // 给编程式创建的控件设置 id（注册到实例 id 表，供 FindControl 查询）。
     // id 空串 → 移除该控件名下全部 id。返回 true 成功。

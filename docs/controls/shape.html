@@ -17,6 +17,11 @@
 
 <p>Shape 纯绘制控件：七种图元（rect/<code>kShapeFilledRect</code>/round-rect/<code>kShapeCircle</code>/ellipse/<code>kShapePolyline</code>/polygon，空心与环带），支持<strong>多图元组合</strong>（单控件拼合复杂图形）与背景色。无事件/无子控件。继承链：<code>Shape → ControlImpl → Control</code>。设计文档见 <code>design/Shape_Design.md</code>。</p>
 
+<figure>
+  <img src="../assets/controls/shape-overview.png" alt="Shape 常用形状与填充/描边" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>circle、round-rect、rect、ellipse 四种形状。</figcaption>
+</figure>
+
 <h2>4.19.1 控件的创建</h2>
 
 <pre><code>// C++

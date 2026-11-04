@@ -59,8 +59,9 @@
       ["advanced/scale.html", "5.5 控件缩放（Scale）"],
       ["advanced/canvas-scale.html", "5.6 视口画布缩放"],
       ["advanced/drag-drop.html", "5.7 拖拽框架（Drag & Drop）"],
-      ["backends.html", "5.8 使用其它后端（SFML/raylib）"],
-      ["integration.html", "5.9 嵌入到你的逻辑回路中"]
+      ["theme.html", "5.8 主题样式（CSS-like Theme）"],
+      ["backends.html", "5.9 使用其它后端（SFML/raylib）"],
+      ["integration.html", "5.10 嵌入到你的逻辑回路中"]
     ]],
     ["appendix/declarative-syntax.html", "附录与 FAQ", [
       ["appendix/declarative-syntax.html", "6 声明式 UI 语法速查"],

@@ -17,6 +17,11 @@
 
 <p>TabControl 多页签控件：页签条四方向（上/下/左/右），页面为任意控件子树。两层焦点作用域：Tab 在页内控件循环，Ctrl+Tab 在「页签条 ↔ 页内」间切换。继承链：<code>TabControl → ControlImpl → Control</code>。设计文档见 <code>design/TabControl_Design.md</code>。</p>
 
+<figure>
+  <img src="../assets/controls/tabcontrol-overview.png" alt="TabControl 页签与当前页" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>顶部页签、选中指示条与 Settings 页内容。</figcaption>
+</figure>
+
 <h2>4.23.1 控件的创建</h2>
 
 <pre><code>// C++

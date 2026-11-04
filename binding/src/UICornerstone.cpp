@@ -299,6 +299,32 @@ bool UICornerstone::LoadLayout(const std::string& jsonContent) {
 bool UICornerstone::LoadLayoutFromFile(const std::string& filePath) {
     return m_impl->instance && Dyn::API().fnLoadLayoutFromFile(m_impl->instance, filePath.c_str()) != 0;
 }
+bool UICornerstone::ApplyTheme(const std::string& themeJson) {
+    return m_impl->instance && Dyn::API().fnApplyTheme && Dyn::API().fnApplyTheme(m_impl->instance, themeJson.c_str()) != 0;
+}
+bool UICornerstone::SetThemeVariant(const std::string& name) {
+    return m_impl->instance && Dyn::API().fnSetThemeVariant && Dyn::API().fnSetThemeVariant(m_impl->instance, name.c_str()) != 0;
+}
+std::string UICornerstone::GetThemeVariant() const {
+    if (!m_impl->instance || !Dyn::API().fnGetThemeVariant) return "";
+    char buf[128] = {0}; int n = 0;
+    Dyn::API().fnGetThemeVariant(m_impl->instance, buf, sizeof(buf), &n);
+    return std::string(buf);
+}
+std::string UICornerstone::GetActiveMedia() const {
+    if (!m_impl->instance || !Dyn::API().fnGetActiveMedia) return "";
+    char buf[512] = {0}; int n = 0;
+    Dyn::API().fnGetActiveMedia(m_impl->instance, buf, sizeof(buf), &n);
+    return std::string(buf);
+}
+bool UICornerstone::RefreshResponsiveTheme(float viewportWidth, float viewportHeight) {
+    return m_impl->instance && Dyn::API().fnRefreshResponsiveTheme &&
+           Dyn::API().fnRefreshResponsiveTheme(m_impl->instance, viewportWidth, viewportHeight) != 0;
+}
+bool UICornerstone::ClearThemeOverrides(Control& ctl) {
+    return m_impl->instance && ctl.IsValid() && Dyn::API().fnClearThemeOverrides &&
+           Dyn::API().fnClearThemeOverrides(m_impl->instance, ctl.Handle()) != 0;
+}
 Control UICornerstone::FindControl(const std::string& id) {
     if (!m_impl->instance) return Control();
     return MakeControl(Dyn::API().fnFindControl(m_impl->instance, id.c_str()));

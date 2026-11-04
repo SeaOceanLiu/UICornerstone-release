@@ -125,6 +125,9 @@ static std::unique_ptr&lt;UICornerstone&gt; Create(const UIBackendCallbacks* cal
 <tr><td><code>bool IsValid() const</code></td><td>句柄是否有效（控件销毁后自动失效）</td></tr>
 <tr><td><code>GetColor / GetStateColor / GetBool / GetInt / GetFloat / GetString / GetEnum / GetPtr</code></td><td>属性读取</td></tr>
 <tr><td><code>SetColor / SetStateColor / SetBool / SetInt / SetFloat / SetString / SetEnum / SetPtr</code></td><td>属性写入（一一对应 C ABI <code>UICornerstone_Set*</code>）</td></tr>
+<tr><td><code>ApplyTheme / SetThemeVariant / GetThemeVariant / RefreshResponsiveTheme / GetActiveMedia</code></td><td>CR20261102001/003：CSS-like 主题、变体与响应式</td></tr>
+<tr><td><code>ClearThemeOverrides(Control&amp;)</code></td><td>清除控件显式覆盖并重算</td></tr>
+<tr><td><code>Control::SetContentPadding / GetContentPadding</code></td><td>通用内容内边距（CR20261102002）</td></tr>
 <tr><td><code>std::string GetId() const</code></td><td>取控件 id</td></tr>
 <tr><td><code>std::string GetType() const</code></td><td>控件运行时类型（与 JSON <code>"type"</code> 值一致，如 <code>"check-box"</code> / <code>"image"</code> / <code>"tree-view"</code>）</td></tr>
 <tr><td><code>UIRect GetRect() const</code></td><td>读取布局矩形</td></tr>

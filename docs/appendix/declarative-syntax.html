@@ -46,6 +46,11 @@
 <tr><td><code>events</code></td><td>object</td><td><code>{"onClick":"handlerName"}</code>，见 6.7</td></tr>
 <tr><td><code>id</code></td><td>string</td><td>全局唯一，FindControl 用</td></tr>
 <tr><td><code>margin</code></td><td>object</td><td><code>{"left","top","right","bottom"}</code></td></tr>
+<tr><td><code>content-padding</code></td><td>number/string/object</td><td>CR20261102002：通用内容内边距（<code>"v h"</code>/<code>"t r b l"</code>）；Dialog 旧 <code>padding</code> 独立</td></tr>
+<tr><td><code>corner-radius</code></td><td>number</td><td>CR20261102001：通用圆角</td></tr>
+<tr><td><code>classes</code> / <code>theme-role</code></td><td>string / string[]</td><td>CSS-like 主题类名；<code>theme-role</code> 为兼容别名</td></tr>
+<tr><td><code>theme-eligible</code></td><td>bool</td><td>是否参与主题匹配（内部辅助控件默认 false）</td></tr>
+<tr><td><code>box-shadow</code></td><td>object</td><td><code>{color,offset-x,offset-y,blur,spread}</code>；无高斯模糊的扩展近似</td></tr>
 <tr><td><code>rect</code></td><td>object</td><td><code>{"x","y","w","h"}</code>；支持百分比字符串 <code>"50%"</code></td></tr>
 <tr><td><code>scale</code></td><td>object</td><td><code>{"x":1.0,"y":1.0}</code>；内容按系数缩放，布局矩形不变</td></tr>
 <tr><td><code>type</code></td><td>string</td><td>必填。kebab 小写，全部 26 种：<code>label / button / image / animation / edit-box / combo-box / text-area / check-box / progress-bar / slider / scroll-bar / panel / win-frame / color-picker / popup / confirm-popup / dialog / menu-bar / numeric-up-down / splitter / tree-view / context-menu（控件级 context-menu 键，非独立控件）/ list-view / status-bar / tab-control / shape</code></td></tr>
@@ -455,7 +460,7 @@ reloader.setPollInterval(15);    // 调整间隔
 reloader.reload();               // 手动触发</code></pre>
 
 <div class="chapter-nav">
-  <a href="../integration.html">← 5.9 嵌入到你的逻辑回路中</a>
+  <a href="../integration.html">← 5.10 嵌入到你的逻辑回路中</a>
   <a href="properties.html">下一节：7 属性速查表 →</a>
 </div>
 

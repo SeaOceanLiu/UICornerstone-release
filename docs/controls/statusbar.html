@@ -17,6 +17,11 @@
 
 <p>VSCode 风格底部状态栏：左右对齐的「段」，每段可显示文本/图标（任意控件），可点击（回调或弹出 MenuPanel 菜单）。继承链：<code>StatusBar → ControlImpl → Control</code>。设计文档见 <code>design/StatusBar_Design.md</code>。</p>
 
+<figure>
+  <img src="../assets/controls/statusbar-overview.png" alt="StatusBar 左右对齐状态段" style="max-width:100%;border:1px solid #333;border-radius:8px;">
+  <figcaption>状态栏位于窗口底部：左侧文件信息，右侧编码与行列位置。</figcaption>
+</figure>
+
 <h2>4.22.1 控件的创建</h2>
 
 <pre><code>// C++

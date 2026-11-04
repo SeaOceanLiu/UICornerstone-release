@@ -272,7 +272,15 @@ struct Api {
     int (*fnGetBool)(UIInstance, UIControlHandle, const char*, int*) = nullptr;
     int (*fnGetInt)(UIInstance, UIControlHandle, const char*, int*) = nullptr;
     int (*fnGetFloat)(UIInstance, UIControlHandle, const char*, float*) = nullptr;
-    int (*fnGetString)(UIInstance, UIControlHandle, const char*, char*, int, int*) = nullptr;   // P0-108：长度查询（cap,outLen）
+    int (*fnGetString)(UIInstance, UIControlHandle, const char*, char*, int, int*) = nullptr;
+    int (*fnApplyTheme)(UIInstance, const char*) = nullptr;
+    int (*fnSetThemeVariant)(UIInstance, const char*) = nullptr;
+    int (*fnGetThemeVariant)(UIInstance, char*, int, int*) = nullptr;
+    int (*fnClearThemeOverrides)(UIInstance, UIControlHandle) = nullptr;
+    int (*fnRefreshResponsiveTheme)(UIInstance, float, float) = nullptr;
+    int (*fnGetActiveMedia)(UIInstance, char*, int, int*) = nullptr;
+    int (*fnSetContentPadding)(UIInstance, UIControlHandle, float, float, float, float) = nullptr;
+    int (*fnGetContentPadding)(UIInstance, UIControlHandle, float*, float*, float*, float*) = nullptr;   // P0-108：长度查询（cap,outLen）
     int (*fnGetEnum)(UIInstance, UIControlHandle, const char*, char*, int) = nullptr;
     int (*fnGetPtr)(UIInstance, UIControlHandle, const char*, void**) = nullptr;
     int (*fnGetControlType)(UIInstance, UIControlHandle, char*, int) = nullptr;
