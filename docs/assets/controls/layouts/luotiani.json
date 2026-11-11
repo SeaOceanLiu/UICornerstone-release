@@ -1,4 +1,4 @@
-{
+﻿{
   "controls": [
     {
       "type": "panel",
@@ -62,7 +62,7 @@
             "w": 220,
             "h": 220
           },
-          "animation": "animations/bombBlock/bombBlock.jsonc",
+          "path": "animations/bombBlock/bombBlock.jsonc",
           "playing": false
         }
       ]

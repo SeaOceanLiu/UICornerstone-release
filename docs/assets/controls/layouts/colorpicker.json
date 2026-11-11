@@ -1,4 +1,4 @@
-{
+﻿{
   "controls": [
     {
       "type": "panel",
@@ -82,7 +82,7 @@
             "h": 34
           },
           "color": "#FF6600",
-          "closed-text": "#DBDBDB",
+          "closed-text-color": "#DBDBDB",
           "presets": [
             "#FF0000",
             "#00FF00",

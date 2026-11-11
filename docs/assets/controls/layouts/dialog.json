@@ -1,4 +1,4 @@
-{
+﻿{
   "controls": [
     {
       "type": "panel",
@@ -62,8 +62,8 @@
             "w": 400,
             "h": 220
           },
-          "confirm-text": "OK",
-          "cancel-text": "Cancel",
+          "confirm-button": { "text": "OK" },
+          "cancel-button": { "text": "Cancel" },
           "padding": 20,
           "children": [
             {

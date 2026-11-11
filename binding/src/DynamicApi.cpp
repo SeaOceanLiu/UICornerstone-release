@@ -58,6 +58,11 @@ static Api& LoadInto(Api& api, void* handle) {
     RESOLVE(GetWindowSize);
     RESOLVE(SetWindowSize);
     RESOLVE(GetNativeWindowHandle);
+    RESOLVE(SetWindowVisible);
+    RESOLVE(GetWindowVisible);
+    RESOLVE(SetWindowAlwaysOnTop);
+    RESOLVE(GetWindowAlwaysOnTop);
+    RESOLVE(SetWindowForeground);
     RESOLVE(SetWindowResizeCallback);
     RESOLVE(SetDropFileCallback);
 

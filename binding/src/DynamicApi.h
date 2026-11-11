@@ -44,6 +44,11 @@ struct Api {
     int (*fnGetWindowSize)(UIInstance, float*, float*) = nullptr;
     int (*fnSetWindowSize)(UIInstance, float, float) = nullptr;
     void* (*fnGetNativeWindowHandle)(UIInstance) = nullptr;
+    int (*fnSetWindowVisible)(UIInstance, int) = nullptr;
+    int (*fnGetWindowVisible)(UIInstance, int*) = nullptr;
+    int (*fnSetWindowAlwaysOnTop)(UIInstance, int) = nullptr;
+    int (*fnGetWindowAlwaysOnTop)(UIInstance, int*) = nullptr;
+    int (*fnSetWindowForeground)(UIInstance) = nullptr;
     void (*fnSetWindowResizeCallback)(UIInstance, UIWindowResizeCallback, void*) = nullptr;
     void (*fnSetDropFileCallback)(UIInstance, UIEventCallback, void*) = nullptr;   // P0-100
 

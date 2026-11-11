@@ -68,7 +68,9 @@ UICornerstone_StatusBarAddItem(g_inst, bar, "branch", u8"main", 0);
   "items": [
     { "id": "branch", "text": "main", "icon": "provider:icons/git",
       "menu": "#branchMenu" },
-    { "id": "enc", "text": "UTF-8", "align": "right" }
+    { "id": "enc", "text": "UTF-8", "align": "right",
+      "events": { "onClick": "onStatusEncoding" } },
+    { "id": "legacy", "text": "Legacy", "onClick": "onStatusLegacy" }
   ]
 }</code></pre>
 
@@ -85,8 +87,11 @@ UICornerstone_StatusBarAddItem(g_inst, bar, "branch", u8"main", 0);
 <tr><td><code>items[].text-shadow</code> / <code>text-shadow-offset-x/y</code></td><td>Color / Number</td><td>段级文字阴影（P0-58；未设继承控件级，偏移缺省 1,1）</td></tr>
 <tr><td><code>items[].icon</code></td><td>资源引用</td><td>段图标（任意控件/Actor）</td></tr>
 <tr><td><code>items[].menu</code></td><td>MenuPanel id</td><td>点击弹出菜单</td></tr>
-<tr><td><code>items[].onClick</code></td><td>动作名</td><td>点击事件（C ABI 经 <code>status-item-click</code>，见 4.22.3）</td></tr>
+<tr><td><code>items[].events.onClick</code></td><td>动作名</td><td>段点击动作（推荐；优先于 <code>items[].onClick</code>）；仅无 <code>menu</code> 的段生效</td></tr>
+<tr><td><code>items[].onClick</code></td><td>动作名</td><td>兼容旧写法；无 menu 段点击动作（<code>events.onClick</code> 优先）</td></tr>
 </table>
+
+<p class="note"><b>CR20261109002</b>：无 <code>menu</code> 的段点击时，JSON action（已注册 handler）与 C ABI <code>status-item-click</code> 可同时触发；有 <code>menu</code> 的段只打开菜单，不执行 action、不触发 <code>status-item-click</code>。</p>
 
 <h2>4.22.5 C++ Binding 样例</h2>
 

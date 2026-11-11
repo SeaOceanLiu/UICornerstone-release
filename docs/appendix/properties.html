@@ -408,7 +408,7 @@
 <tr><td><code>font</code></td><td><code>kFont</code></td><td>Enum</td><td>HarmonyOS_Sans_SC_Regular（P0-26）</td></tr>
 <tr><td><code>item-height</code></td><td><code>kItemHeight</code></td><td>Float</td><td>13 / rect 高</td></tr>
 </table>
-<p>段数据经 JSON <code>items[]</code>（id / text / align / icon / menu / onClick）；C ABI 专用函数 <code>StatusBarAddItem</code> 等见 8.3.1。</p>
+<p>段数据经 JSON <code>items[]</code>（id / text / align / icon / menu / events.onClick / onClick）；<code>events.onClick</code> 优先于兼容键 <code>onClick</code>；C ABI 专用函数 <code>StatusBarAddItem</code> 等见 8.3.1。</p>
 <h3>TabControl（类型 <code>tab-control</code>）</h3>
 <table>
 <tr><th>属性</th><th>属性常量</th><th>类型</th><th>默认值 / 说明</th></tr>

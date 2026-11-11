@@ -63,7 +63,7 @@
 <pre><code>{ "type":"animation", "id":"ani1x", "rect":{"x":1100,"y":80,"w":256,"h":256},
   "path":"assets/animations/rotateBtn/rotateBtn.jsonc",     // 相对 exe 目录；w/h=0 → 画布尺寸
   "scale":{"x":1,"y":1},                                    // 挂树后延迟 prepare，SetBool("playing") 启动
-  "playing":true }                                          // "playing":true 挂树后自动播放；运行时键 "animation" 与 "path" 同义（P0-24）</code></pre>
+  "playing":true }                                          // JSON 布局键为 "path"；运行时属性 "animation" 为同义 API 键（P0-24）</code></pre>
 
 <h3>button</h3>
 <pre><code>{ "type":"button", "id":"submit",
@@ -108,12 +108,12 @@
   "items":[ { "label":"Beijing","value":"beijing" },
             { "label":"Wuhan","value":"wuhan","disabled":true } ] }</code></pre>
 
-<h3>context-menu（右键菜单，控件级 context-menu 键）</h3>
+<h3>context-menu（右键菜单；控件级键与独立 type）</h3>
 <pre><code>{ "type":"label", "id":"lbl", "rect": { "x": 10, "y": 10, "w": 120, "h": 24 }, "caption":"t",
   "context-menu": { "items": [
-    { "caption":"Open", "shortcut":"Ctrl+O" }, { "type":"separator" },
-    { "caption":"Delete" } ] } }</code></pre>
-<p>控件级 <code>context-menu</code> 键：<code>items[]</code> 字段复用 MenuPanel 解析（caption / shortcut / type:separator / icon / leading 等）。</p>
+    { "caption":"Open", "shortcut":"Ctrl+O", "events":{"onClick":"onOpen"} },
+    { "type":"separator" }, { "caption":"Delete", "onClick":"onDelete" } ] } }</code></pre>
+<p>控件级 <code>context-menu</code> 键：<code>items[]</code> 字段复用 MenuPanel 解析（caption / shortcut / type:separator / icon / leading 等）。独立 <code>type:"context-menu"</code> 自 CR20261109003 起支持 <code>items[]</code> 的 caption/shortcut/separator/onClick（events 优先）；嵌套子菜单 V1 不支持。</p>
 
 <h3>edit-box</h3>
 <pre><code>{ "type":"edit-box", "id":"nameEdit",
@@ -236,7 +236,7 @@
 <pre><code>{ "type":"status-bar", "id":"sb", "rect": { "x": 0, "y": 876, "w": 1400, "h": 24 }, "font-size":13,
   "items":[ { "id":"branch","text":"main","icon":"provider:icons/git","menu":"#branchMenu" },
             { "id":"enc","text":"UTF-8","align":"right" } ] }</code></pre>
-<p>属性键：<code>font-size</code> / <code>item-height</code> / <code>hover</code>（控件级悬停反馈色，P0-74⑤）；<code>items[]</code>：<code>id</code> / <code>text</code> / <code>align</code>（left/right）/ <code>icon</code> / <code>menu</code> / <code>onClick</code> / <code>text-color</code> / <code>background-color</code> / <code>hover-background-color</code>（独立悬停背景，P0-75）。</p>
+<p>属性键：<code>font-size</code> / <code>item-height</code> / <code>hover</code>（控件级悬停反馈色，P0-74⑤）；<code>items[]</code>：<code>id</code> / <code>text</code> / <code>align</code>（left/right）/ <code>icon</code> / <code>menu</code> / <code>events.onClick</code>（优先）/ <code>onClick</code>（兼容）/ <code>text-color</code> / <code>background-color</code> / <code>hover-background-color</code>（独立悬停背景，P0-75）。</p>
 <p><strong>通用字体键（v1.1.1）</strong>：任意控件可声明 <code>font</code>（对象 <code>{name,size,style}</code>）或 <code>font-size</code>；未声明时沿<b>父控件链</b>继承最近显式字体。全链路未声明时回落主题字体。继承细节：仅当祖先显式声明 <code>font.name</code> 时才覆盖子控件默认字体名；父只声明 <code>font-size</code> 时子保留自身默认字体名（如 ListView 默认 <code>HarmonyOS_Sans_SC_Regular</code>）。</p>
 
 <table>
