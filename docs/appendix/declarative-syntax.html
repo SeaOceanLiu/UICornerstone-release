@@ -5,7 +5,7 @@
 <link rel="icon" type="image/svg+xml" href="../assets/UICornerstone_Logo.svg">
 <link rel="icon" type="image/png" sizes="256x256" href="../assets/UICornerstone_Logo_256.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6 声明式 UI 语法速查表 - UICornerstone v1.1.0 用户手册</title>
+<title>6 声明式 UI 语法速查表 - UICornerstone v1.2.0 用户手册</title>
 <link rel="stylesheet" href="../css/style.css">
 <script id="nav-data" src="../assets/nav.js" data-prefix="../" data-current="appendix/declarative-syntax.html"></script>
 </head>
@@ -423,7 +423,7 @@ parser.registerHandler("handleSubmit", [](shared_ptr&lt;Control&gt; ctl){ /* ...
 
 <p>类别：<code>button / label / editbox / textarea / checkbox / progressbar / panel / scrollbar / menubar</code>；应用顺序：Theme 默认 → 公共 colors → 控件专用颜色 → 控件专用字体。</p>
 
-<h2>6.9 组件与实例化</h2>
+<h2 id="components">6.9 组件与实例化</h2>
 
 <pre><code>{
   "components": {
@@ -451,6 +451,7 @@ parser.registerHandler("handleSubmit", [](shared_ptr&lt;Control&gt; ctl){ /* ...
 }</code></pre>
 
 <p class="note">实例化：<code>type</code> 写组件名；模板 id 自动前缀 <code>实例id__</code>；占位符 <code>{{propName}}</code>（整串类型化见 P0-109）；组件实例上的 <code>bind</code> 不参与模板展开，绑定请写在具体控件条目上。</p>
+<p class="note">完整的组件定义/占位符/事件映射/诊断说明见 <a href="../advanced/components.html">5.9 组件系统（Components）</a>。</p>
 
 <h2>6.10 热加载</h2>
 
@@ -460,7 +461,7 @@ reloader.setPollInterval(15);    // 调整间隔
 reloader.reload();               // 手动触发</code></pre>
 
 <div class="chapter-nav">
-  <a href="../integration.html">← 5.10 嵌入到你的逻辑回路中</a>
+  <a href="../integration.html">← 5.11 嵌入到你的逻辑回路中</a>
   <a href="properties.html">下一节：7 属性速查表 →</a>
 </div>
 
